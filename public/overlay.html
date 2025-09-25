@@ -1,0 +1,299 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Boss Fight</title>
+  <link rel="icon" type="image/png" href="./logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #e63946;
+      --secondary-color: #ffb703;
+      --background-color: #081226;
+      --text-color: #fff;
+      --border-color: #888;
+      --header-bg: rgba(0, 0, 0, 0.4);
+    }
+    body {
+      margin: 0;
+      font-family: 'Press Start 2P', monospace;
+      background: linear-gradient(to bottom, var(--background-color), #0b1622);
+      color: var(--text-color);
+      overflow: hidden;
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .game-container {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .game-viewport {
+      width: 960px;
+      height: 540px;
+      position: relative;
+      background: rgba(0, 0, 0, 0.2);
+      border: 4px solid var(--border-color);
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+      image-rendering: pixelated;
+    }
+    /* Responsive scaling for different screen sizes */
+    @media (max-width: 960px) {
+      .game-viewport {
+        width: 100vw;
+        height: 56.25vw; /* Maintain 16:9 aspect ratio */
+        border-width: 2px;
+      }
+    }
+    .header {
+      width: 100%;
+      height: 60px;
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: var(--header-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+      border-bottom: 2px solid var(--border-color);
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+    }
+    .header h1 {
+      margin: 0;
+      font-size: 1.2em;
+      letter-spacing: 2px;
+      text-shadow: 2px 2px #000;
+    }
+    /* Boss sprite container */
+    .boss-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      transition: transform .08s linear;
+      will-change: transform;
+    }
+    .boss {
+      width: 250px;
+      height: 250px;
+      background-image: url("the_rock.png");
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
+      image-rendering: pixelated;
+      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
+    }
+    /* HP Bar styling */
+    .hpbar-container {
+      position: absolute;
+      top: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 380px;
+      height: 28px;
+      background: #222;
+      border: 4px solid var(--border-color);
+      box-sizing: border-box;
+      padding: 3px;
+      box-shadow: inset 0 0 8px rgba(0,0,0,0.5), 0 0 10px rgba(0,0,0,0.5);
+    }
+    .hpfill {
+      height: 100%;
+      width: 100%;
+      background-image: repeating-linear-gradient(90deg, var(--primary-color) 0 8px, #ff8787 8px 16px);
+      transition: width 0.2s linear;
+      box-shadow: inset 0 -4px 8px rgba(0,0,0,0.4);
+    }
+    .hptext {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1em;
+      text-shadow: 2px 2px #000;
+      color: var(--text-color);
+    }
+    /* Leaderboard styling */
+    .leaderboard {
+      position: absolute;
+      right: 20px;
+      top: 20px;
+      width: 200px;
+      background: rgba(0,0,0,0.5);
+      padding: 15px;
+      border: 2px solid var(--border-color);
+      box-shadow: 0 0 10px rgba(0,0,0,0.5);
+      border-radius: 4px;
+    }
+    .leaderboard h3 {
+      margin: 0 0 10px 0;
+      font-size: 1em;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      text-align: center;
+      color: var(--secondary-color);
+    }
+    .leaderboard .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      font-size: 0.9em;
+      border-bottom: 1px dashed rgba(255,255,255,0.3);
+    }
+    .leaderboard .row:last-child {
+      border-bottom: none;
+    }
+    /* Last hit display */
+    .last-hit {
+      position: absolute;
+      left: 50%;
+      bottom: 60px;
+      transform: translateX(-50%);
+      font-size: 1.1em;
+      padding: 10px 20px;
+      background: rgba(0,0,0,0.5);
+      border: 2px solid var(--border-color);
+      border-radius: 6px;
+      text-shadow: 1px 1px #000;
+    }
+    /* KO effect and blink animations remain */
+    .ko {
+      animation: koZoom 1s ease forwards;
+    }
+    @keyframes koZoom {
+      0% { transform: scale(1) translate(-50%, -50%); filter: none; opacity: 1; }
+      50% { transform: scale(1.05) translate(-50%, -50%) rotate(-8deg); filter: blur(.5px) drop-shadow(0 0 20px var(--secondary-color)); opacity: 1; }
+      100% { transform: scale(0.2) translate(-50%, -50%) rotate(-30deg); opacity: 0; }
+    }
+    .blink {
+      animation: blinkAnim 0.35s steps(1) infinite;
+    }
+    @keyframes blinkAnim {
+      50% { opacity: 0.15; transform: scale(1.01) translate(-50%, -50%) translateY(-3px) rotate(-2deg); }
+    }
+    /* Small boss hit animation */
+    .boss-hit-anim {
+      animation: shake .2s ease-in-out;
+    }
+    @keyframes shake {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      25% { transform: translate(-52%, -48%) rotate(2deg); }
+      50% { transform: translate(-48%, -52%) rotate(-2deg); }
+      75% { transform: translate(-52%, -48%) rotate(2deg); }
+      100% { transform: translate(-50%, -50%) rotate(0deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="game-viewport" id="root">
+      <div class="header">
+        <h1>BOSS FIGHT</h1>
+      </div>
+      <div class="hpbar-container">
+        <div id="hpfill" class="hpfill"></div>
+        <div id="hptext" class="hptext">HP: --</div>
+      </div>
+
+      <div id="boss" class="boss-container">
+        <div class="boss"></div>
+      </div>
+
+      <div class="leaderboard">
+        <h3>Top Spammers</h3>
+        <div id="lb"></div>
+      </div>
+
+      <div id="last" class="last-hit">Last hit: —</div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    let maxHP = 10000;
+    let hp = maxHP;
+
+    function renderState(state) {
+      if (!state) return;
+      maxHP = state.maxHP || maxHP;
+      hp = state.bossHP != null ? state.bossHP : hp;
+      updateHPBar();
+      updateLeaderboard(state.top || []);
+      updateLast(state.lastHitter);
+    }
+
+    function updateHPBar() {
+      const pct = Math.max(0, Math.min(1, hp / maxHP));
+      const w = Math.round(pct * 100) + '%';
+      const hpFillEl = document.getElementById('hpfill');
+      hpFillEl.style.width = w;
+      document.getElementById('hptext').innerText = `HP: ${hp.toLocaleString()} / ${maxHP.toLocaleString()}`;
+
+      const bossContainerEl = document.getElementById('boss');
+      bossContainerEl.classList.remove('blink', 'ko');
+      if (pct <= 0.2 && pct > 0) {
+        bossContainerEl.classList.add('blink');
+      }
+      if (pct <= 0) {
+        bossContainerEl.classList.add('ko');
+      }
+    }
+
+    function updateLeaderboard(top) {
+      const el = document.getElementById('lb');
+      el.innerHTML = '';
+      if (!top || top.length === 0) {
+        el.innerHTML = '<div style="opacity:.6; text-align: center;">No hits yet</div>';
+        return;
+      }
+      top.forEach((row, idx) => {
+        const div = document.createElement('div');
+        div.className = 'row';
+        div.innerHTML = `<div>${idx + 1}. ${escapeHtml(row.username)}</div><div>${row.hits.toLocaleString()}</div>`;
+        el.appendChild(div);
+      });
+    }
+
+    function updateLast(last) {
+      const el = document.getElementById('last');
+      el.innerText = last ? `Last hit: ${last}` : 'Last hit: —';
+    }
+
+    socket.on('state', (s) => {
+      renderState(s);
+    });
+
+    socket.on('update', (s) => {
+      renderState(s);
+      // Small flash animation on each update
+      const bossContainerEl = document.getElementById('boss');
+      bossContainerEl.classList.add('boss-hit-anim');
+      setTimeout(() => {
+        bossContainerEl.classList.remove('boss-hit-anim');
+      }, 200);
+    });
+
+    socket.on('end', (results) => {
+      // Show winner & big KO animation
+      updateLeaderboard(results.scores.sort((a, b) => b.hits - a.hits).slice(0, 3));
+      updateLast(results.lastHitter);
+      document.getElementById('hpfill').style.width = '0%';
+    });
+
+    // Small helper
+    function escapeHtml(s) {
+      return String(s || '').replace(/[&<>"']/g, function(m) {
+        return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m];
+      });
+    }
+  </script>
+</body>
+</html>
