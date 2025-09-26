@@ -3,190 +3,517 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Boss Fight</title>
+  <title>Boss Fight Arena</title>
   <link rel="icon" type="image/png" href="./logo.png">
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     :root {
-      --primary-color: #e63946;
-      --secondary-color: #ffb703;
-      --background-color: #081226;
-      --text-color: #fff;
-      --border-color: #888;
-      --header-bg: rgba(0, 0, 0, 0.4);
+      --primary-red: #ff2d55;
+      --primary-green: #30d158;
+      --secondary-gold: #ffcc02;
+      --accent-purple: #bf5af2;
+      --bg-dark: #0a0a0a;
+      --bg-darker: #050505;
+      --text-primary: #ffffff;
+      --text-secondary: #a0a0a0;
+      --border-glow: #333;
+      --success-green: #34c759;
+      --warning-orange: #ff9500;
+      --error-red: #ff3b30;
     }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       margin: 0;
-      font-family: 'Press Start 2P', monospace;
-      background: linear-gradient(to bottom, var(--background-color), #0b1622);
-      color: var(--text-color);
+      font-family: 'Orbitron', monospace;
+      background: radial-gradient(ellipse at center, #1a1a2e 0%, var(--bg-dark) 70%, var(--bg-darker) 100%);
+      color: var(--text-primary);
       overflow: hidden;
-      font-size: 12px;
-      line-height: 1.5;
+      font-size: 14px;
+      line-height: 1.4;
+      min-height: 100vh;
     }
+
     .game-container {
       width: 100vw;
       height: 100vh;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: center;
       position: relative;
+      background-image: 
+        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 45, 85, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(191, 90, 242, 0.1) 0%, transparent 50%);
     }
+
     .game-viewport {
-      width: 960px;
-      height: 540px;
+      flex: 1;
       position: relative;
-      background: rgba(0, 0, 0, 0.2);
-      border: 4px solid var(--border-color);
-      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-      image-rendering: pixelated;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
     }
-    /* Responsive scaling for different screen sizes */
-    @media (max-width: 960px) {
-      .game-viewport {
-        width: 100vw;
-        height: 56.25vw; /* Maintain 16:9 aspect ratio */
-        border-width: 2px;
-      }
-    }
+
+    /* Enhanced Header */
     .header {
       width: 100%;
-      height: 60px;
+      height: 80px;
       position: absolute;
       top: 0;
       left: 0;
-      background: var(--header-bg);
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.8) 0%, rgba(26, 26, 46, 0.9) 100%);
+      backdrop-filter: blur(10px);
+      border-bottom: 2px solid var(--accent-purple);
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 10;
-      border-bottom: 2px solid var(--border-color);
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     }
+
     .header h1 {
       margin: 0;
-      font-size: 1.2em;
-      letter-spacing: 2px;
-      text-shadow: 2px 2px #000;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 1.8em;
+      letter-spacing: 4px;
+      background: linear-gradient(45deg, var(--primary-red), var(--secondary-gold), var(--accent-purple));
+      background-size: 200% 200%;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: gradientShift 3s ease-in-out infinite;
+      text-shadow: 0 0 20px rgba(255, 45, 85, 0.5);
     }
-    /* Boss sprite container */
+
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+
+    /* Connection Status */
+    .connection-status {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .connection-status.connected {
+      background: rgba(52, 199, 89, 0.2);
+      border: 1px solid var(--success-green);
+      color: var(--success-green);
+    }
+
+    .connection-status.disconnected {
+      background: rgba(255, 59, 48, 0.2);
+      border: 1px solid var(--error-red);
+      color: var(--error-red);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .connected .status-dot {
+      background: var(--success-green);
+    }
+
+    .disconnected .status-dot {
+      background: var(--error-red);
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.7; transform: scale(1.2); }
+    }
+
+    /* Enhanced Boss Container */
     .boss-container {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      transition: transform .08s linear;
-      will-change: transform;
+      transition: all 0.1s ease-out;
+      z-index: 10;
     }
+
     .boss {
-      width: 250px;
-      height: 250px;
+      width: 300px;
+      height: 300px;
       background-image: url("the_rock.png");
       background-size: contain;
       background-position: center;
       background-repeat: no-repeat;
-      image-rendering: pixelated;
-      filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
+      filter: 
+        drop-shadow(0 0 20px rgba(255, 255, 255, 0.3))
+        drop-shadow(0 0 40px rgba(255, 45, 85, 0.2));
+      transition: filter 0.2s ease;
     }
-    /* HP Bar styling */
+
+    /* Enhanced HP Bar */
     .hpbar-container {
       position: absolute;
-      top: 100px;
+      top: 120px;
       left: 50%;
       transform: translateX(-50%);
-      width: 380px;
-      height: 28px;
-      background: #222;
-      border: 4px solid var(--border-color);
-      box-sizing: border-box;
-      padding: 3px;
-      box-shadow: inset 0 0 8px rgba(0,0,0,0.5), 0 0 10px rgba(0,0,0,0.5);
+      width: min(500px, 80vw);
+      height: 40px;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(26, 26, 46, 0.9));
+      border: 2px solid var(--border-glow);
+      border-radius: 25px;
+      padding: 4px;
+      backdrop-filter: blur(10px);
+      box-shadow: 
+        0 4px 20px rgba(0, 0, 0, 0.5),
+        inset 0 2px 10px rgba(0, 0, 0, 0.3);
     }
+
     .hpfill {
       height: 100%;
       width: 100%;
-      background-image: repeating-linear-gradient(90deg, var(--primary-color) 0 8px, #ff8787 8px 16px);
-      transition: width 0.2s linear;
-      box-shadow: inset 0 -4px 8px rgba(0,0,0,0.4);
+      background: linear-gradient(90deg, 
+        var(--primary-red) 0%, 
+        var(--warning-orange) 50%, 
+        var(--secondary-gold) 100%
+      );
+      border-radius: 20px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(255, 45, 85, 0.4);
     }
+
+    .hpfill::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, 
+        transparent, 
+        rgba(255, 255, 255, 0.3), 
+        transparent
+      );
+      animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+
     .hptext {
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      font-size: 1em;
-      text-shadow: 2px 2px #000;
-      color: var(--text-color);
+      font-weight: 900;
+      font-size: 14px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+      z-index: 2;
     }
-    /* Leaderboard styling */
+
+    /* Enhanced Leaderboard */
     .leaderboard {
       position: absolute;
       right: 20px;
-      top: 20px;
-      width: 200px;
-      background: rgba(0,0,0,0.5);
-      padding: 15px;
-      border: 2px solid var(--border-color);
-      box-shadow: 0 0 10px rgba(0,0,0,0.5);
-      border-radius: 4px;
+      top: 100px;
+      width: 280px;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(26, 26, 46, 0.9));
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--border-glow);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
+
     .leaderboard h3 {
-      margin: 0 0 10px 0;
-      font-size: 1em;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      margin: 0 0 15px 0;
+      font-weight: 900;
+      font-size: 16px;
       text-align: center;
-      color: var(--secondary-color);
+      background: linear-gradient(45deg, var(--secondary-gold), var(--accent-purple));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-transform: uppercase;
+      letter-spacing: 2px;
     }
+
     .leaderboard .row {
       display: flex;
       justify-content: space-between;
-      padding: 8px 0;
-      font-size: 0.9em;
-      border-bottom: 1px dashed rgba(255,255,255,0.3);
+      align-items: center;
+      padding: 12px 0;
+      font-size: 13px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.2s ease;
     }
+
+    .leaderboard .row:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+
     .leaderboard .row:last-child {
       border-bottom: none;
     }
-    /* Last hit display */
+
+    .leaderboard .row .rank {
+      font-weight: 900;
+      color: var(--secondary-gold);
+      min-width: 30px;
+    }
+
+    .leaderboard .row .username {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin: 0 10px;
+    }
+
+    .leaderboard .row .hits {
+      font-weight: 700;
+      color: var(--primary-red);
+    }
+
+    /* Game Stats Panel */
+    .stats-panel {
+      position: absolute;
+      left: 20px;
+      top: 100px;
+      width: 240px;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(26, 26, 46, 0.9));
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--border-glow);
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .stats-panel h3 {
+      margin: 0 0 15px 0;
+      font-weight: 900;
+      font-size: 16px;
+      text-align: center;
+      color: var(--accent-purple);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 10px 0;
+      font-size: 13px;
+    }
+
+    .stat-label {
+      color: var(--text-secondary);
+    }
+
+    .stat-value {
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* Last Hit Display */
     .last-hit {
       position: absolute;
       left: 50%;
-      bottom: 60px;
+      bottom: 80px;
       transform: translateX(-50%);
-      font-size: 1.1em;
-      padding: 10px 20px;
-      background: rgba(0,0,0,0.5);
-      border: 2px solid var(--border-color);
-      border-radius: 6px;
-      text-shadow: 1px 1px #000;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 15px 25px;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(26, 26, 46, 0.9));
+      backdrop-filter: blur(15px);
+      border: 1px solid var(--accent-purple);
+      border-radius: 25px;
+      text-align: center;
+      box-shadow: 0 4px 20px rgba(191, 90, 242, 0.3);
+      transition: all 0.3s ease;
     }
-    /* KO effect and blink animations remain */
+
+    /* Damage Number Animation */
+    .damage-number {
+      position: absolute;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 24px;
+      font-weight: 900;
+      color: var(--primary-red);
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+      animation: damageFloat 1.5s ease-out forwards;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    @keyframes damageFloat {
+      0% {
+        opacity: 1;
+        transform: scale(1.2) translateY(0);
+      }
+      100% {
+        opacity: 0;
+        transform: scale(0.8) translateY(-60px);
+      }
+    }
+
+    /* Enhanced Animations */
     .ko {
-      animation: koZoom 1s ease forwards;
+      animation: koEffect 2s ease-out forwards;
     }
-    @keyframes koZoom {
-      0% { transform: scale(1) translate(-50%, -50%); filter: none; opacity: 1; }
-      50% { transform: scale(1.05) translate(-50%, -50%) rotate(-8deg); filter: blur(.5px) drop-shadow(0 0 20px var(--secondary-color)); opacity: 1; }
-      100% { transform: scale(0.2) translate(-50%, -50%) rotate(-30deg); opacity: 0; }
+
+    @keyframes koEffect {
+      0% { 
+        transform: scale(1) translate(-50%, -50%) rotate(0deg);
+        opacity: 1;
+        filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.3));
+      }
+      20% {
+        transform: scale(1.1) translate(-50%, -50%) rotate(-5deg);
+        filter: drop-shadow(0 0 40px rgba(255, 45, 85, 0.8));
+      }
+      100% { 
+        transform: scale(0.2) translate(-50%, -50%) rotate(-45deg);
+        opacity: 0;
+        filter: drop-shadow(0 0 60px rgba(255, 45, 85, 1));
+      }
     }
-    .blink {
-      animation: blinkAnim 0.35s steps(1) infinite;
+
+    .critical-health {
+      animation: criticalPulse 0.5s ease-in-out infinite alternate;
     }
-    @keyframes blinkAnim {
-      50% { opacity: 0.15; transform: scale(1.01) translate(-50%, -50%) translateY(-3px) rotate(-2deg); }
+
+    @keyframes criticalPulse {
+      0% {
+        filter: drop-shadow(0 0 20px rgba(255, 45, 85, 0.5)) brightness(1);
+      }
+      100% {
+        filter: drop-shadow(0 0 40px rgba(255, 45, 85, 1)) brightness(1.2);
+      }
     }
-    /* Small boss hit animation */
+
     .boss-hit-anim {
-      animation: shake .2s ease-in-out;
+      animation: enhancedShake 0.3s ease-in-out;
     }
-    @keyframes shake {
-      0% { transform: translate(-50%, -50%) rotate(0deg); }
-      25% { transform: translate(-52%, -48%) rotate(2deg); }
-      50% { transform: translate(-48%, -52%) rotate(-2deg); }
-      75% { transform: translate(-52%, -48%) rotate(2deg); }
-      100% { transform: translate(-50%, -50%) rotate(0deg); }
+
+    @keyframes enhancedShake {
+      0%, 100% { transform: translate(-50%, -50%) rotate(0deg); }
+      10% { transform: translate(-52%, -48%) rotate(2deg) scale(1.02); }
+      20% { transform: translate(-48%, -52%) rotate(-2deg) scale(0.98); }
+      30% { transform: translate(-52%, -48%) rotate(2deg) scale(1.02); }
+      40% { transform: translate(-48%, -52%) rotate(-2deg) scale(0.98); }
+      50% { transform: translate(-52%, -48%) rotate(2deg) scale(1.02); }
+      60% { transform: translate(-48%, -52%) rotate(-2deg) scale(0.98); }
+      70% { transform: translate(-52%, -48%) rotate(2deg) scale(1.02); }
+      80% { transform: translate(-48%, -52%) rotate(-2deg) scale(0.98); }
+      90% { transform: translate(-52%, -48%) rotate(2deg) scale(1.02); }
+    }
+
+    /* Victory Screen */
+    .victory-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(10px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.5s ease;
+    }
+
+    .victory-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .victory-content {
+      text-align: center;
+      max-width: 600px;
+      padding: 40px;
+      background: linear-gradient(135deg, rgba(26, 26, 46, 0.9), rgba(0, 0, 0, 0.8));
+      border-radius: 20px;
+      border: 2px solid var(--secondary-gold);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    }
+
+    .victory-title {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 2.5em;
+      margin-bottom: 20px;
+      background: linear-gradient(45deg, var(--secondary-gold), var(--primary-red));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: victoryGlow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes victoryGlow {
+      0% { text-shadow: 0 0 20px rgba(255, 204, 2, 0.5); }
+      100% { text-shadow: 0 0 40px rgba(255, 204, 2, 0.8); }
+    }
+
+    /* Mobile Responsiveness */
+    @media (max-width: 768px) {
+      .leaderboard, .stats-panel {
+        width: 200px;
+        padding: 15px;
+        font-size: 12px;
+      }
+
+      .boss {
+        width: 200px;
+        height: 200px;
+      }
+
+      .header h1 {
+        font-size: 1.2em;
+        letter-spacing: 2px;
+      }
+
+      .hpbar-container {
+        width: 90vw;
+        height: 35px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .stats-panel {
+        display: none;
+      }
+
+      .leaderboard {
+        position: fixed;
+        bottom: 20px;
+        right: 50%;
+        transform: translateX(50%);
+        width: 90vw;
+      }
     }
   </style>
 </head>
@@ -194,8 +521,13 @@
   <div class="game-container">
     <div class="game-viewport" id="root">
       <div class="header">
-        <h1>BOSS FIGHT</h1>
+        <h1>BOSS FIGHT ARENA</h1>
+        <div class="connection-status" id="connectionStatus">
+          <div class="status-dot"></div>
+          <span id="statusText">Connecting...</span>
+        </div>
       </div>
+
       <div class="hpbar-container">
         <div id="hpfill" class="hpfill"></div>
         <div id="hptext" class="hptext">HP: --</div>
@@ -205,12 +537,35 @@
         <div class="boss"></div>
       </div>
 
+      <div class="stats-panel">
+        <h3>Game Stats</h3>
+        <div class="stat-item">
+          <span class="stat-label">Total Hits:</span>
+          <span class="stat-value" id="totalHits">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Active Players:</span>
+          <span class="stat-value" id="activePlayers">0</span>
+        </div>
+        <div class="stat-item">
+          <span class="stat-label">Damage Dealt:</span>
+          <span class="stat-value" id="damageDealt">0</span>
+        </div>
+      </div>
+
       <div class="leaderboard">
-        <h3>Top Spammers</h3>
+        <h3>Top Fighters</h3>
         <div id="lb"></div>
       </div>
 
       <div id="last" class="last-hit">Last hit: —</div>
+    </div>
+
+    <div class="victory-overlay" id="victoryOverlay">
+      <div class="victory-content">
+        <div class="victory-title">BOSS DEFEATED!</div>
+        <div id="victoryDetails"></div>
+      </div>
     </div>
   </div>
 
@@ -220,6 +575,22 @@
 
     let maxHP = 10000;
     let hp = maxHP;
+    let totalHits = 0;
+    let damageDealt = 0;
+    let activePlayers = new Set();
+
+    function updateConnectionStatus(connected) {
+      const statusEl = document.getElementById('connectionStatus');
+      const statusText = document.getElementById('statusText');
+      
+      if (connected) {
+        statusEl.className = 'connection-status connected';
+        statusText.textContent = 'Connected';
+      } else {
+        statusEl.className = 'connection-status disconnected';
+        statusText.textContent = 'Disconnected';
+      }
+    }
 
     function renderState(state) {
       if (!state) return;
@@ -228,72 +599,145 @@
       updateHPBar();
       updateLeaderboard(state.top || []);
       updateLast(state.lastHitter);
+      updateStats();
     }
 
     function updateHPBar() {
       const pct = Math.max(0, Math.min(1, hp / maxHP));
-      const w = Math.round(pct * 100) + '%';
       const hpFillEl = document.getElementById('hpfill');
-      hpFillEl.style.width = w;
-      document.getElementById('hptext').innerText = `HP: ${hp.toLocaleString()} / ${maxHP.toLocaleString()}`;
+      hpFillEl.style.width = (pct * 100) + '%';
+      
+      const hpText = document.getElementById('hptext');
+      hpText.textContent = `HP: ${hp.toLocaleString()} / ${maxHP.toLocaleString()}`;
 
       const bossContainerEl = document.getElementById('boss');
-      bossContainerEl.classList.remove('blink', 'ko');
+      bossContainerEl.classList.remove('critical-health', 'ko');
+      
       if (pct <= 0.2 && pct > 0) {
-        bossContainerEl.classList.add('blink');
+        bossContainerEl.classList.add('critical-health');
       }
       if (pct <= 0) {
         bossContainerEl.classList.add('ko');
+        showVictoryScreen();
       }
     }
 
     function updateLeaderboard(top) {
       const el = document.getElementById('lb');
       el.innerHTML = '';
+      
       if (!top || top.length === 0) {
-        el.innerHTML = '<div style="opacity:.6; text-align: center;">No hits yet</div>';
+        el.innerHTML = '<div style="opacity:.6; text-align: center; padding: 20px;">No fighters yet</div>';
         return;
       }
+      
       top.forEach((row, idx) => {
+        activePlayers.add(row.username);
         const div = document.createElement('div');
         div.className = 'row';
-        div.innerHTML = `<div>${idx + 1}. ${escapeHtml(row.username)}</div><div>${row.hits.toLocaleString()}</div>`;
+        div.innerHTML = `
+          <span class="rank">#${idx + 1}</span>
+          <span class="username">${escapeHtml(row.username)}</span>
+          <span class="hits">${row.hits.toLocaleString()}</span>
+        `;
         el.appendChild(div);
       });
     }
 
     function updateLast(last) {
       const el = document.getElementById('last');
-      el.innerText = last ? `Last hit: ${last}` : 'Last hit: —';
+      el.textContent = last ? `Last hit by: ${last}` : 'Waiting for first hit...';
     }
+
+    function updateStats() {
+      document.getElementById('totalHits').textContent = totalHits.toLocaleString();
+      document.getElementById('activePlayers').textContent = activePlayers.size;
+      document.getElementById('damageDealt').textContent = (maxHP - hp).toLocaleString();
+    }
+
+    function showDamageNumber(damage, x, y) {
+      const damageEl = document.createElement('div');
+      damageEl.className = 'damage-number';
+      damageEl.textContent = `-${damage}`;
+      damageEl.style.left = x + 'px';
+      damageEl.style.top = y + 'px';
+      document.body.appendChild(damageEl);
+      
+      setTimeout(() => {
+        damageEl.remove();
+      }, 1500);
+    }
+
+    function showVictoryScreen() {
+      const overlay = document.getElementById('victoryOverlay');
+      overlay.classList.add('show');
+      
+      setTimeout(() => {
+        overlay.classList.remove('show');
+      }, 5000);
+    }
+
+    // Socket events
+    socket.on('connect', () => {
+      updateConnectionStatus(true);
+    });
+
+    socket.on('disconnect', () => {
+      updateConnectionStatus(false);
+    });
 
     socket.on('state', (s) => {
       renderState(s);
     });
 
     socket.on('update', (s) => {
+      const prevHP = hp;
       renderState(s);
-      // Small flash animation on each update
+      
+      // Show damage animation
+      if (s.latest && s.latest.delta < 0) {
+        const damage = Math.abs(s.latest.delta);
+        totalHits += damage;
+        
+        // Random position around boss
+        const bossRect = document.getElementById('boss').getBoundingClientRect();
+        const x = bossRect.left + bossRect.width/2 + (Math.random() - 0.5) * 200;
+        const y = bossRect.top + bossRect.height/2 + (Math.random() - 0.5) * 100;
+        
+        showDamageNumber(damage, x, y);
+      }
+      
+      // Boss hit animation
       const bossContainerEl = document.getElementById('boss');
       bossContainerEl.classList.add('boss-hit-anim');
       setTimeout(() => {
         bossContainerEl.classList.remove('boss-hit-anim');
-      }, 200);
+      }, 300);
     });
 
     socket.on('end', (results) => {
-      // Show winner & big KO animation
       updateLeaderboard(results.scores.sort((a, b) => b.hits - a.hits).slice(0, 3));
       updateLast(results.lastHitter);
-      document.getElementById('hpfill').style.width = '0%';
+      
+      const victoryDetails = document.getElementById('victoryDetails');
+      victoryDetails.innerHTML = `
+        <p style="font-size: 1.2em; margin: 20px 0;">Winner: <strong style="color: var(--secondary-gold);">${results.winner || 'Unknown'}</strong></p>
+        <p>Total Damage: <strong>${results.totalHits?.toLocaleString() || 0}</strong></p>
+        <p>Final Blow by: <strong>${results.lastHitter || 'Unknown'}</strong></p>
+      `;
+      
+      showVictoryScreen();
     });
 
-    // Small helper
+    // Helper function
     function escapeHtml(s) {
       return String(s || '').replace(/[&<>"']/g, function(m) {
         return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[m];
       });
     }
+
+    // Initialize
+    updateConnectionStatus(false);
   </script>
 </body>
 </html>
