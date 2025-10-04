@@ -12,7 +12,11 @@
     "ws": "*",
     "csv-writer": "*",
     "date-fns": "*",
-    "socket.io-client": "*",
-    "pump-chat-client": "*"
+    "pump-chat-client": "*",
+    "@solana/web3.js": "^1.87.6",
+    "@coral-xyz/anchor": "^0.31.1",
+    "bn.js": "^5.2.1",
+    "bs58": "*",
+    "crypto": "*"
   }
 }

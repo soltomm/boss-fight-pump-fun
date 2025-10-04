@@ -1,41 +1,100 @@
-# Pump.fun Boss Fight Overlay (local)
+# Solana Boss Fight Betting
 
-## What this does
-- Connects to a chat websocket (Pump.fun or other) and listens for trigger keywords ("■■" or "HIT" by default).
-- Each trigger reduces boss HP (default initial HP is 10,000).
-- Real-time overlay served at `/overlay.html` for OBS BrowserSource.
-- Exports JSON and CSV results at the end of the fight to ./exports/.
+A real-time boss fight game with Solana-based betting integration. Players can bet on whether the boss will die or survive, then participate in a timed boss fight through pump.fun chat messages.
 
-## Install
-1. Node.js 18+ (or fairly recent LTS).
-2. In project root:
+## Features
+
+- **Betting Phase**: 1-minute betting window where users place SOL bets on boss death/survival
+- **Timed Boss Fight**: 1-minute boss fight with real-time HP tracking
+- **Automatic Payouts**: Winners share the losing bets pool proportionally
+- **Real-time Updates**: WebSocket-based live updates for all participants
+- **Pump.fun Integration**: Listens to pump.fun chat for game actions
+- **Export Results**: JSON and CSV export of game results and betting data
+
+## Game Flow
+
+1. **Betting Phase** (1 minute)
+   - Users connect their Solana wallets
+   - Place bets on whether the boss will die or survive
+   - View real-time betting pool totals
+
+2. **Boss Fight Phase** (1 minute)
+   - Boss fight begins automatically after betting ends
+   - Players send trigger keywords in pump.fun chat to damage the boss
+   - Real-time HP updates and leaderboard tracking
+
+3. **Payout Phase**
+   - Determine if boss was defeated or survived
+   - Calculate payouts for winning bets
+   - Distribute prizes proportionally based on bet amounts
+   - Take configurable fee percentage
+
+## Setup Instructions
+
+### Prerequisites
+
+- Node.js (v16 or higher)
+- Solana wallet (Phantom recommended)
+- pump.fun coin address to monitor
+
+### Installation
+
+1. **Clone and install dependencies:**
+   ```bash
    npm install
+   ```
 
-## Config (env)
-- PUMP_CHAT_WS_URL: websocket URL for chat (e.g. wss://example) **REQUIRED** to connect to live chat.
-- TRIGGER_KEYWORDS: comma-separated triggers (e.g. "■■,HIT")
-- HEAL_KEYWORDS: optional (e.g. "❤■")
-- INITIAL_HP: number (default 10000)
-- PORT: server port (default 3000)
-- EXPORT_DIR: where result JSON/CSV are saved
+2. **Configure environment variables:**
+   ```bash
+   cp .env.template .env
+   ```
+   
+   Edit `.env` with your configuration:
+   ```env
+   COIN_ADDRESS=your_pump_fun_coin_address
+   TREASURY_WALLET=your_solana_wallet_address
+   SOLANA_RPC_URL=https://api.mainnet-beta.solana.com
+   FEE_PERCENTAGE=5
+   ```
 
-Example (mac / linux):
-PUMP_CHAT_WS_URL="wss://pumpportal.fun/api/data" INITIAL_HP=10000 TRIGGER_KEYWORDS="■■,HIT" npm start
+3. **Start the server:**
+   ```bash
+   npm start
+   ```
 
-## OBS integration
-1. Open OBS.
-2. Add a new BrowserSource.
-3. Put the URL `http://localhost:3000/overlay.html`.
-4. Set resolution to 960x540 (match the overlay container) or desired size.
-5. Click OK.
+4. **Open the overlay:**
+   Visit `http://localhost:3000/overlay.html`
 
-## How to adapt to Pump.fun message format
-- Inspect one raw websocket message from Pump.fun and modify `parseIncomingChatMessage(msg)` in server.js to return `{ username, message, timestamp }`.
-- Some pump.fun endpoints require a subscription message after opening the websocket. Add `ws.send(...)` in ws.on('open') as needed.
+### Required Environment Variables
 
-## Files exported
-When fight ends, JSON and CSV files are saved to `./exports/` with timestamped filenames. JSON contains:
-{
-  winner, winnerHits, lastHitter, scores[], totalHits, timestamp
-}
-CSV contains username/hits rows.
+- `COIN_ADDRESS`: The pump.fun coin address to monitor for chat messages
+- `TREASURY_WALLET`: Your Solana wallet address to receive fees
+- `SOLANA_RPC_URL`: Solana RPC endpoint (mainnet/devnet)
+
+### Optional Environment Variables
+
+- `PORT`: Server port (default: 3000)
+- `TRIGGER_KEYWORDS`: Damage keywords (default: "HIT,■■")
+- `HEAL_KEYWORDS`: Healing keywords (default: "HEAL,❤■")
+- `INITIAL_HP`: Boss starting HP (default: 30)
+- `FEE_PERCENTAGE`: Fee percentage on losing bets (default: 5%)
+- `EXPORT_DIR`: Results export directory (default: ./exports)
+
+## Usage
+
+### For Players
+
+1. **Connect Wallet**: Click "Connect Wallet" and approve the Phantom wallet connection
+2. **Place Bets**: During the betting phase, enter your username and bet amount, then choose "Boss Dies" or "Boss Survives"
+3. **Participate**: During the fight phase, send damage keywords in the pump.fun chat to attack the boss
+4. **Collect Winnings**: If your prediction was correct, you'll receive your original bet plus a share of the prize pool
+
+### For Administrators
+
+Use the admin controls in the overlay to:
+- **Start Betting Phase**: Begin a new betting round
+- **Reset Game**: Clear all data and return to idle state
+
+### API Endpoints
+
+- `GET /status`: Get current game status

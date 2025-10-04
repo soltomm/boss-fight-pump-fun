@@ -1,0 +1,906 @@
+{
+  "address": "FtQbMDA7w8a9icfbMkuTxxQ695Wp9e6RQFSGVjmYQgz3",
+  "metadata": {
+    "name": "boss_fight_betting",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Solana program for boss fight betting game"
+  },
+  "instructions": [
+    {
+      "name": "claim_fees",
+      "docs": [
+        "Claim fees (called by treasury)"
+      ],
+      "discriminator": [
+        82,
+        251,
+        233,
+        156,
+        12,
+        52,
+        184,
+        202
+      ],
+      "accounts": [
+        {
+          "name": "betting_round"
+        },
+        {
+          "name": "escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "betting_round.round_id",
+                "account": "BettingRound"
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "claim_payout",
+      "docs": [
+        "Claim payout for winning bet"
+      ],
+      "discriminator": [
+        127,
+        240,
+        132,
+        62,
+        227,
+        198,
+        146,
+        133
+      ],
+      "accounts": [
+        {
+          "name": "betting_round"
+        },
+        {
+          "name": "bet_account",
+          "writable": true
+        },
+        {
+          "name": "escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "betting_round.round_id",
+                "account": "BettingRound"
+              }
+            ]
+          }
+        },
+        {
+          "name": "bettor",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "end_fight",
+      "docs": [
+        "End the fight and determine outcome"
+      ],
+      "discriminator": [
+        99,
+        99,
+        185,
+        208,
+        151,
+        150,
+        139,
+        11
+      ],
+      "accounts": [
+        {
+          "name": "betting_round",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_betting_round",
+      "docs": [
+        "Initialize a new betting round"
+      ],
+      "discriminator": [
+        237,
+        199,
+        243,
+        6,
+        150,
+        219,
+        20,
+        180
+      ],
+      "accounts": [
+        {
+          "name": "betting_round",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  101,
+                  116,
+                  116,
+                  105,
+                  110,
+                  103,
+                  95,
+                  114,
+                  111,
+                  117,
+                  110,
+                  100
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "round_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "round_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "treasury",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "round_id",
+          "type": "u64"
+        },
+        {
+          "name": "betting_duration",
+          "type": "i64"
+        },
+        {
+          "name": "fight_duration",
+          "type": "i64"
+        },
+        {
+          "name": "initial_hp",
+          "type": "u32"
+        },
+        {
+          "name": "fee_percentage",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "place_bet",
+      "docs": [
+        "Place a bet on boss death or survival"
+      ],
+      "discriminator": [
+        222,
+        62,
+        67,
+        220,
+        63,
+        166,
+        126,
+        33
+      ],
+      "accounts": [
+        {
+          "name": "betting_round",
+          "writable": true
+        },
+        {
+          "name": "bet_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  101,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "betting_round.round_id",
+                "account": "BettingRound"
+              },
+              {
+                "kind": "account",
+                "path": "bettor"
+              }
+            ]
+          }
+        },
+        {
+          "name": "escrow",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "betting_round.round_id",
+                "account": "BettingRound"
+              }
+            ]
+          }
+        },
+        {
+          "name": "bettor",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "prediction",
+          "type": {
+            "defined": {
+              "name": "BossPrediction"
+            }
+          }
+        },
+        {
+          "name": "username",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "start_fight_phase",
+      "docs": [
+        "Start the fighting phase (called by authority after betting ends)"
+      ],
+      "discriminator": [
+        23,
+        47,
+        134,
+        19,
+        239,
+        163,
+        149,
+        51
+      ],
+      "accounts": [
+        {
+          "name": "betting_round",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "update_boss_hp",
+      "docs": [
+        "Update boss HP (called by authority during fight)"
+      ],
+      "discriminator": [
+        74,
+        44,
+        131,
+        236,
+        17,
+        99,
+        132,
+        139
+      ],
+      "accounts": [
+        {
+          "name": "betting_round",
+          "writable": true
+        },
+        {
+          "name": "authority",
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "new_hp",
+          "type": "u32"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "BetAccount",
+      "discriminator": [
+        117,
+        187,
+        165,
+        174,
+        194,
+        28,
+        119,
+        76
+      ]
+    },
+    {
+      "name": "BettingRound",
+      "discriminator": [
+        91,
+        104,
+        129,
+        6,
+        83,
+        166,
+        250,
+        42
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "BetPlaced",
+      "discriminator": [
+        88,
+        88,
+        145,
+        226,
+        126,
+        206,
+        32,
+        0
+      ]
+    },
+    {
+      "name": "BettingRoundInitialized",
+      "discriminator": [
+        239,
+        77,
+        131,
+        249,
+        163,
+        71,
+        45,
+        115
+      ]
+    },
+    {
+      "name": "BossHpUpdated",
+      "discriminator": [
+        151,
+        244,
+        37,
+        240,
+        140,
+        109,
+        164,
+        104
+      ]
+    },
+    {
+      "name": "FeesClaimed",
+      "discriminator": [
+        22,
+        104,
+        110,
+        222,
+        38,
+        157,
+        14,
+        62
+      ]
+    },
+    {
+      "name": "FightEnded",
+      "discriminator": [
+        241,
+        121,
+        185,
+        8,
+        55,
+        48,
+        82,
+        31
+      ]
+    },
+    {
+      "name": "FightPhaseStarted",
+      "discriminator": [
+        66,
+        236,
+        206,
+        25,
+        156,
+        154,
+        218,
+        242
+      ]
+    },
+    {
+      "name": "PayoutClaimed",
+      "discriminator": [
+        200,
+        39,
+        105,
+        112,
+        116,
+        63,
+        58,
+        149
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "NotInBettingPhase",
+      "msg": "Not in betting phase"
+    },
+    {
+      "code": 6001,
+      "name": "BettingPeriodExpired",
+      "msg": "Betting period has expired"
+    },
+    {
+      "code": 6002,
+      "name": "BetTooSmall",
+      "msg": "Bet amount too small"
+    },
+    {
+      "code": 6003,
+      "name": "UsernameTooLong",
+      "msg": "Username too long"
+    },
+    {
+      "code": 6004,
+      "name": "NotInFightPhase",
+      "msg": "Not in fight phase"
+    },
+    {
+      "code": 6005,
+      "name": "BettingStillActive",
+      "msg": "Betting is still active"
+    },
+    {
+      "code": 6006,
+      "name": "FightPeriodExpired",
+      "msg": "Fight period has expired"
+    },
+    {
+      "code": 6007,
+      "name": "FightNotFinished",
+      "msg": "Fight has not finished"
+    },
+    {
+      "code": 6008,
+      "name": "FightNotEnded",
+      "msg": "Fight has not ended"
+    },
+    {
+      "code": 6009,
+      "name": "PayoutAlreadyClaimed",
+      "msg": "Payout already claimed"
+    },
+    {
+      "code": 6010,
+      "name": "BetLost",
+      "msg": "Bet lost, no payout available"
+    },
+    {
+      "code": 6011,
+      "name": "Unauthorized",
+      "msg": "Unauthorized"
+    },
+    {
+      "code": 6012,
+      "name": "InsufficientEscrowFunds",
+      "msg": "Insufficient funds in escrow account for payout"
+    }
+  ],
+  "types": [
+    {
+      "name": "BetAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bettor",
+            "type": "pubkey"
+          },
+          {
+            "name": "round_id",
+            "type": "u64"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "prediction",
+            "type": {
+              "defined": {
+                "name": "BossPrediction"
+              }
+            }
+          },
+          {
+            "name": "username",
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "payout_claimed",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BetPlaced",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "round_id",
+            "type": "u64"
+          },
+          {
+            "name": "bettor",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "prediction",
+            "type": {
+              "defined": {
+                "name": "BossPrediction"
+              }
+            }
+          },
+          {
+            "name": "username",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BettingRound",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "round_id",
+            "type": "u64"
+          },
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "treasury",
+            "type": "pubkey"
+          },
+          {
+            "name": "betting_start_time",
+            "type": "i64"
+          },
+          {
+            "name": "betting_end_time",
+            "type": "i64"
+          },
+          {
+            "name": "fight_end_time",
+            "type": "i64"
+          },
+          {
+            "name": "initial_hp",
+            "type": "u32"
+          },
+          {
+            "name": "current_hp",
+            "type": "u32"
+          },
+          {
+            "name": "fee_percentage",
+            "type": "u8"
+          },
+          {
+            "name": "phase",
+            "type": {
+              "defined": {
+                "name": "GamePhase"
+              }
+            }
+          },
+          {
+            "name": "total_death_bets",
+            "type": "u64"
+          },
+          {
+            "name": "total_survival_bets",
+            "type": "u64"
+          },
+          {
+            "name": "total_bets_count",
+            "type": "u64"
+          },
+          {
+            "name": "boss_defeated",
+            "type": "bool"
+          },
+          {
+            "name": "payouts_processed",
+            "type": "bool"
+          },
+          {
+            "name": "escrow_bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BettingRoundInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "round_id",
+            "type": "u64"
+          },
+          {
+            "name": "betting_end_time",
+            "type": "i64"
+          },
+          {
+            "name": "fight_end_time",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BossHpUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "round_id",
+            "type": "u64"
+          },
+          {
+            "name": "new_hp",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BossPrediction",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Death"
+          },
+          {
+            "name": "Survival"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FeesClaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "round_id",
+            "type": "u64"
+          },
+          {
+            "name": "treasury",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FightEnded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "round_id",
+            "type": "u64"
+          },
+          {
+            "name": "boss_defeated",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "FightPhaseStarted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "round_id",
+            "type": "u64"
+          },
+          {
+            "name": "fight_end_time",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "GamePhase",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Betting"
+          },
+          {
+            "name": "Fighting"
+          },
+          {
+            "name": "Ended"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PayoutClaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "round_id",
+            "type": "u64"
+          },
+          {
+            "name": "bettor",
+            "type": "pubkey"
+          },
+          {
+            "name": "original_bet",
+            "type": "u64"
+          },
+          {
+            "name": "prize_share",
+            "type": "u64"
+          },
+          {
+            "name": "total_payout",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ]
+}

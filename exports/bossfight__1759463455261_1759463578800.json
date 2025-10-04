@@ -1,0 +1,15 @@
+{
+  "currentRoundId": 1759463455261,
+  "bossDefeated": false,
+  "topDamageDealer": null,
+  "topDamage": 0,
+  "lastHitter": null,
+  "scores": [],
+  "totalHits": 0,
+  "totalDeathBets": 0,
+  "totalSurvivalBets": 0,
+  "coinAddress": "",
+  "programId": "FtQbMDA7w8a9icfbMkuTxxQ695Wp9e6RQFSGVjmYQgz3",
+  "bettingRoundPDA": "45dh3f6FjsGJZQ94BuYAYMyDoCZjqhvdkfmdiUxYCt3f",
+  "timestamp": "2025-10-02T23:52:58-04:00"
+}
