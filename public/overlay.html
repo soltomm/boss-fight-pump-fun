@@ -193,6 +193,35 @@
             50% { transform: translate(-50%, -70%) scale(1.2); opacity: 1; }
             100% { transform: translate(-50%, -100%) scale(1); opacity: 0; }
         }
+
+        .heal-effect {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            font-weight: bold;
+            color: #2ed573;
+            text-shadow: 0 0 20px #2ed573;
+            animation: healPop 0.6s forwards;
+            pointer-events: none;
+        }
+
+        @keyframes healPop {
+            0% { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+            50% { transform: translate(-50%, -30%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, 0%) scale(1); opacity: 0; }
+        }
+
+        .boss-image.healed {
+            animation: glow 0.5s;
+            filter: drop-shadow(0 0 50px rgba(46, 213, 115, 1)) brightness(1.3);
+        }
+
+        @keyframes glow {
+            0%, 100% { filter: drop-shadow(0 0 30px rgba(255, 71, 87, 0.6)); }
+            50% { filter: drop-shadow(0 0 50px rgba(46, 213, 115, 1)) brightness(1.3); }
+        }
         
         .boss-hp {
             width: 100%;
@@ -231,6 +260,64 @@
             background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
             animation: shimmer 2s infinite;
         }
+
+        .phase-transition {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    animation: fadeIn 0.5s ease;
+}
+
+.phase-transition.fadeOut {
+    animation: fadeOut 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+.phase-transition-text {
+    font-size: 4rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 5px;
+    animation: zoomIn 0.5s ease;
+}
+
+@keyframes zoomIn {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.victory-confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    background: gold;
+    animation: confettiFall 3s linear forwards;
+    z-index: 1999;
+}
+
+@keyframes confettiFall {
+    to {
+        transform: translateY(100vh) rotate(360deg);
+        opacity: 0;
+    }
+}
         
         @keyframes shimmer {
             0% { left: -100%; }
@@ -919,6 +1006,11 @@ window.addEventListener('load', async () => {
         });
         
         socket.on('update', (data) => {
+            
+            if (data.bossHP !== undefined && data.bossHP > gameState.bossHP) {
+                showHealEffect(data.bossHP - gameState.bossHP);
+                animateBossHeal();
+            }
             if (data.bossHP !== undefined && data.bossHP < gameState.bossHP) {
                 showHitEffect(gameState.bossHP - data.bossHP);
                 animateBossDamage();
@@ -942,36 +1034,61 @@ window.addEventListener('load', async () => {
         });
         
         socket.on('phase_change', (data) => {
-            gameState = { ...gameState, ...data };
-            if (data.currentRoundId) {
-                gameState.currentRoundId = data.currentRoundId;
-            }
-            updateDisplay();
-            showMessage(data.message);
-            
-            if (data.gamePhase === 'betting') {
-                setTimeout(() => loadBettingData(), 500);
-            }
-        });
-        
+    console.log('Phase change received:', data);
+    
+    gameState = { ...gameState, ...data };
+    
+    if (data.currentRoundId) {
+        if (userBet && userBet.roundId !== data.currentRoundId) {
+            console.log('New round detected, clearing old bet state');
+            userBet = null;
+            betDeathEl.disabled = false;
+            betSurvivalEl.disabled = false;
+            usernameInputEl.value = '';
+        }
+        gameState.currentRoundId = data.currentRoundId;
+    }
+    
+    // Show phase transition animation
+    if (data.gamePhase === 'betting') {
+        showPhaseTransition('BETTING PHASE START!');
+        playSound('heal');
+    } else if (data.gamePhase === 'fighting') {
+        showPhaseTransition('FIGHT BEGINS!');
+        playSound('hit');
+    }
+    
+    updateDisplay();
+    showMessage(data.message);
+    
+    if (data.gamePhase === 'betting' && wallet.connected) {
+        setTimeout(() => loadBettingData(), 500);
+    }
+});
+
+socket.on('fight_ended', (data) => {
+    gameState = { ...gameState, ...data };
+    
+    if (data.bossDefeated) {
+        animateBossDefeat();
+        createConfetti();
+        showPhaseTransition('BOSS DEFEATED!', 3000);
+        playSound('victory');
+    } else {
+        showPhaseTransition('BOSS SURVIVED!', 3000);
+        playSound('defeat');
+    }
+    
+    updateDisplay();
+    showMessage(data.message);
+    
+    if (userBet && wallet.connected) {
+        checkClaimEligibility();
+    }
+});
         socket.on('betting_update', (data) => {
             gameState = { ...gameState, ...data };
             updateDisplay();
-        });
-        
-        socket.on('fight_ended', (data) => {
-            gameState = { ...gameState, ...data };
-            
-            if (data.bossDefeated) {
-                animateBossDefeat();
-            }
-            
-            updateDisplay();
-            showMessage(data.message);
-            
-            if (userBet && wallet.connected) {
-                checkClaimEligibility();
-            }
         });
         
         socket.on('game_reset', (data) => {
@@ -997,6 +1114,70 @@ window.addEventListener('load', async () => {
             }, 3000);
         });
         
+        // Sound system
+        const sounds = {
+            hit: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBi6Lyf==',
+            heal: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQoGAACBgoWIiouLjIyMi4mHhYJ+e3h1cnBrZmJeW1hWVFNSUlJTVVdaXmJmam5zdXh7fX+BgoSFhoeHh4aFhIOBgH58e3l3dXNxb21ramloZmVkY2JiYmJiYw==',
+            victory: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQoGAACQkY+OjIqHhYJ/fHl2c3BtamdiX1xZVlNRT05NTExMTU9SV15mbH6Nna21wMvW4Orm5+no6erq6uno5+Xj4N7b19PPysXAvrmyr6qkon5+fX18e3p5',
+            defeat: 'data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQoGAADr6+vr6+rp6Ofm5ePh397c2tjV09DLx8O+ubSuqKKcloqEfnh0cGxqaGdnZ2hqa3B2fYeMlZ+psr3J1eHs9f3++/Ts39TLxL+7t7Ktqqahn52ZlpKPjImGg4F+fH'
+        };
+
+        function playSound(type) {
+            try {
+                const audio = new Audio(sounds[type]);
+                audio.volume = 0.3;
+                audio.play().catch(e => console.log('Audio play failed:', e));
+            } catch (e) {
+                console.log('Sound error:', e);
+            }
+        }
+
+        function showHealEffect(heal) {
+            const healEffect = document.createElement('div');
+            healEffect.className = 'heal-effect';
+            healEffect.textContent = `+${heal}`;
+            document.querySelector('.boss-image-container').appendChild(healEffect);
+            
+            setTimeout(() => {
+                healEffect.remove();
+            }, 600);
+        }
+
+        function animateBossHeal() {
+            bossImageEl.classList.add('healed');
+            setTimeout(() => {
+                bossImageEl.classList.remove('healed');
+            }, 500);
+        }
+
+        function showPhaseTransition(text, duration = 2000) {
+            const overlay = document.createElement('div');
+            overlay.className = 'phase-transition';
+            overlay.innerHTML = `<div class="phase-transition-text" style="color: ${
+                text.includes('BETTING') ? '#ffd700' : 
+                text.includes('FIGHT') ? '#ff4757' : '#2ed573'
+            }">${text}</div>`;
+            
+            document.body.appendChild(overlay);
+            
+            setTimeout(() => {
+                overlay.classList.add('fadeOut');
+                setTimeout(() => overlay.remove(), 500);
+            }, duration);
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'victory-confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.background = ['#ffd700', '#ff4757', '#2ed573', '#5e52ed'][Math.floor(Math.random() * 4)];
+                confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => confetti.remove(), 3000);
+            }
+}
         // Wallet connection
         connectWalletEl.addEventListener('click', async () => {
             if (!wallet.connected) {
@@ -1197,16 +1378,17 @@ async function placeBet(prediction) {
         
         // Animation functions
         function showHitEffect(damage) {
-            const hitEffect = document.createElement('div');
-            hitEffect.className = 'hit-effect';
-            hitEffect.textContent = `-${damage}`;
-            document.querySelector('.boss-image-container').appendChild(hitEffect);
-            
-            setTimeout(() => {
-                hitEffect.remove();
-            }, 600);
-        }
-        
+    const hitEffect = document.createElement('div');
+    hitEffect.className = 'hit-effect';
+    hitEffect.textContent = `-${damage}`;
+    document.querySelector('.boss-image-container').appendChild(hitEffect);
+    
+    playSound('hit');
+    
+    setTimeout(() => {
+        hitEffect.remove();
+    }, 600);
+}
         function animateBossDamage() {
             bossImageEl.classList.add('damaged');
             setTimeout(() => {

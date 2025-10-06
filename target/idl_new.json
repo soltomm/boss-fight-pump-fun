@@ -202,6 +202,9 @@
         },
         {
           "name": "escrow",
+          "docs": [
+            "Escrow PDA - just derive it, don't init"
+          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -229,8 +232,7 @@
           "signer": true
         },
         {
-          "name": "treasury",
-          "writable": true
+          "name": "treasury"
         },
         {
           "name": "system_program",

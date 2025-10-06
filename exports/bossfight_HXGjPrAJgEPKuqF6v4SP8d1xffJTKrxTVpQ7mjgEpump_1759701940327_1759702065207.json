@@ -1,0 +1,20 @@
+{
+  "currentRoundId": 1759701940327,
+  "bossDefeated": false,
+  "topDamageDealer": "2jCAXTn1tR4oZZX3WWNaq8JWyAsucua4oDaJDzvAktVN",
+  "topDamage": 7,
+  "lastHitter": "2jCAXTn1tR4oZZX3WWNaq8JWyAsucua4oDaJDzvAktVN",
+  "scores": [
+    {
+      "username": "2jCAXTn1tR4oZZX3WWNaq8JWyAsucua4oDaJDzvAktVN",
+      "hits": 7
+    }
+  ],
+  "totalHits": 7,
+  "totalDeathBets": 0.1,
+  "totalSurvivalBets": 0.1,
+  "coinAddress": "HXGjPrAJgEPKuqF6v4SP8d1xffJTKrxTVpQ7mjgEpump",
+  "programId": "FtQbMDA7w8a9icfbMkuTxxQ695Wp9e6RQFSGVjmYQgz3",
+  "bettingRoundPDA": "A4upzq7yggFfxM6HXaJ3FGx6SEK4cGN8j9ZdsfLTkYgJ",
+  "timestamp": "2025-10-05T18:07:45-04:00"
+}

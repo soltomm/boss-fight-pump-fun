@@ -51,7 +51,7 @@ const HEAL_KEYWORDS = (process.env.HEAL_KEYWORDS || 'HEAL,❤■').split(',').ma
 const INITIAL_HP = process.env.INITIAL_HP ? Number(process.env.INITIAL_HP) : 30;
 const EXPORT_DIR = process.env.EXPORT_DIR || path.join(__dirname, 'exports');
 const SOLANA_RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
-const AUTHORITY_KEYPAIR_PATH = process.env.AUTHORITY_KEYPAIR_PATH;
+const AUTHORITY_KEYPAIR_PATH = process.env.AUTHORITY_KEYPAIR_PATH ;
 const TREASURY_WALLET = process.env.TREASURY_WALLET;
 const PROGRAM_ID_STR = process.env.PROGRAM_ID || 'FtQbMDA7w8a9icfbMkuTxxQ695Wp9e6RQFSGVjmYQgz3';
 const FEE_PERCENTAGE = process.env.FEE_PERCENTAGE ? Number(process.env.FEE_PERCENTAGE) : 5;
@@ -522,6 +522,8 @@ async function startBettingPhase() {
     
     if (program) {
       console.log('Initializing betting round on blockchain...');
+      const authorityPubkey = authorityKeypair.publicKey.toBase58();
+      console.log("Authority Public Key:", authorityPubkey);
       
       const tx = await program.methods
         .initializeBettingRound(
@@ -538,6 +540,7 @@ async function startBettingPhase() {
           treasury: treasuryPubkey,
           systemProgram: SystemProgram.programId,
         })
+        .signers([authorityKeypair])
         .rpc();
       
       console.log('Betting round initialized on blockchain:', tx);
