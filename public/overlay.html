@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solana Boss Fight</title>
+    <title>Apex Gauntlet </title>
+    <link rel="icon" type="image/png" href="apex_logo.png"> 
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
     <script src="https://unpkg.com/@project-serum/anchor@latest/dist/browser.min.js"></script>
@@ -13,6 +14,40 @@
             padding: 0;
             box-sizing: border-box;
         }
+
+.corner-logo {
+    position: fixed; /* Keeps it in the corner when scrolling */
+    top: 20px;       /* 20px from the top edge */
+    left: 20px;      /* 20px from the left edge */
+    z-index: 100;    /* Keep it on top of everything */
+    
+    /* NEW: Styling for the container to make it a rounded holder */
+    width: 80px;      /* Define explicit width for the container */
+    height: 80px;     /* Define explicit height for the container */
+    border-radius: 50%; /* Make the container circular */
+    overflow: hidden;   /* Crucial: clips the image to the circle */
+    background: rgba(255, 255, 255, 0.05); /* Subtle background */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Subtle border */
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.4); /* Glow effect for the container */
+    display: flex; /* To center the image inside */
+    align-items: center; /* To center the image inside */
+    justify-content: center; /* To center the image inside */
+    transition: all 0.3s ease; /* Smooth transitions */
+}
+
+.corner-logo:hover {
+    transform: scale(1.05); /* Slightly enlarge on hover */
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.6); /* Stronger glow on hover */
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.small-logo {
+    width: 90%; /* Make the image fill most of the circular container */
+    height: 90%; /* Make the image fill most of the circular container */
+    object-fit: contain; /* Ensure the image fits without cropping */
+    border-radius: 50%; /* Ensure the image itself is rounded in case it has transparency */
+    /* Remove individual drop-shadow, as the container now handles the glow */
+}
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -781,12 +816,16 @@
     </style>
 </head>
 <body>
-    <!-- Animated background particles -->
     <div class="particles" id="particles"></div>
+
+<div class="message-banner" id="messageBanner"></div>
     
     <div class="message-banner" id="messageBanner"></div>
     
     <div class="container">
+        <div class="corner-logo">
+        <img src="apex_logo.png" alt="Logo" class="small-logo">
+    </div>
         <div class="left-panel">
             <!-- Game Phase & Timer -->
             <div class="card">
@@ -1433,7 +1472,7 @@ async function placeBet(prediction) {
             } else if (gameState.gamePhase === 'betting') {
                 statusText = 'Betting phase active!';
             } else if (gameState.gamePhase === 'fighting') {
-                statusText = 'Boss fight in progress!';
+                statusText = 'Apex Gauntlet in progress!';
             } else if (gameState.gamePhase === 'ended') {
                 statusText = gameState.bossDefeated ? 'Boss defeated!' : 'Boss survived!';
             }

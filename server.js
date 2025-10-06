@@ -595,12 +595,12 @@ async function startFightingPhase(retryCount = 0) {
       await loadBettingData();
     }
     
-    console.log('Fighting phase started! Boss fight begins now.');
+    console.log('Fighting phase started! Apex Gauntlet begins now.');
     
     io.emit('phase_change', {
       gamePhase,
       timeRemaining: FIGHT_DURATION * 1000,
-      message: 'Boss fight started! You have 1 minute to defeat the boss!'
+      message: 'Apex Gauntlet started! You have 1 minute to defeat the boss!'
     });
     
     gameTimer = setTimeout(() => {
@@ -933,42 +933,51 @@ async function handleChatMessage(username, message, timestamp = Date.now()) {
 
   const text = (message || '').toUpperCase();
   let delta = 0;
+  
+  // 1. Check for ANY 'HIT' keyword presence
+  const hasHitKeyword = TRIGGER_KEYWORDS.some(k => 
+    k && text.includes(k.toUpperCase())
+  );
+  
+  // 2. Check for ANY 'HEAL' keyword presence
+  const hasHealKeyword = HEAL_KEYWORDS.some(k => 
+    k && text.includes(k.toUpperCase())
+  );
 
-  TRIGGER_KEYWORDS.forEach(k => {
-    if (!k) return;
-    const re = new RegExp(escapeRegExp(k.toUpperCase()), 'g');
-    const matches = (text.match(re) || []).length;
-    delta -= matches;
-  });
+  // 3. Determine the final delta (exactly -1, +1, or 0)
+  if (hasHitKeyword && !hasHealKeyword) {
+    // Only hit keywords found: Deal exactly 1 damage
+    delta = -1;
+  } else if (hasHealKeyword && !hasHitKeyword) {
+    // Only heal keywords found: Heal exactly 1 HP
+    delta = 1;
+  } 
+  // If both or neither are present, delta remains 0, and the function will return early.
 
-  HEAL_KEYWORDS.forEach(k => {
-    if (!k) return;
-    const re = new RegExp(escapeRegExp(k.toUpperCase()), 'g');
-    const matches = (text.match(re) || []).length;
-    delta += matches;
-  });
 
-  if (delta === 0) return;
+  if (delta === 0) return; // Exit if no valid, unambiguous command was found
 
-  const hitsDelta = Math.abs(delta);
+  // The rest of the logic uses the calculated delta (-1 or +1)
+  const hitsDelta = Math.abs(delta); // This will always be 1 now
+  
+  // Update user statistics and logging
   if (delta < 0) {
-    totalHits += hitsDelta;
+    totalHits += hitsDelta; // Adds 1
     const prev = userHits.get(username) || 0;
-    userHits.set(username, prev + hitsDelta);
+    userHits.set(username, prev + hitsDelta); // Adds 1
     lastHitter = username;
     console.log(`${username} dealt ${hitsDelta} damage! Boss HP: ${Math.max(0, bossHP + delta)}/${INITIAL_HP}`);
   } else {
+    // Delta is 1 (Heal)
     console.log(`${username} healed ${hitsDelta} HP! Boss HP: ${Math.min(INITIAL_HP, bossHP + delta)}/${INITIAL_HP}`);
   }
 
   chronological.push({ username, message, timestamp, delta });
 
-  const previousHP = bossHP;
+  // Update the boss's HP, clamped between 0 and INITIAL_HP
   bossHP = Math.max(0, Math.min(INITIAL_HP, bossHP + delta));
   
-  // NO RPC CALLS HERE - HP tracked client-side only!
-  // Final HP will be sent to blockchain when fight ends
-  
+  // Emit the update event
   io.emit('update', {
     bossHP,
     maxHP: INITIAL_HP,
@@ -977,10 +986,6 @@ async function handleChatMessage(username, message, timestamp = Date.now()) {
     latest: chronological[chronological.length - 1],
     timeRemaining: Math.max(0, fightEndTime - Date.now())
   });
-
-  if (bossHP === 0 && previousHP > 0) {
-    endFight('defeated');
-  }
 }
 
 function getTop(n = 3) {

@@ -202,9 +202,6 @@
         },
         {
           "name": "escrow",
-          "docs": [
-            "Escrow PDA - just derive it, don't init"
-          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -606,6 +603,16 @@
       "code": 6012,
       "name": "InsufficientEscrowFunds",
       "msg": "Insufficient funds in escrow account for payout"
+    },
+    {
+      "code": 6013,
+      "name": "InvalidAccount",
+      "msg": "Invalid account provided"
+    },
+    {
+      "code": 6014,
+      "name": "ArithmeticOverflow",
+      "msg": "Arithmetic overflow"
     }
   ],
   "types": [
