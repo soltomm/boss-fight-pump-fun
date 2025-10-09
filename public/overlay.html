@@ -1152,6 +1152,25 @@
                 setTimeout(() => el.bossImage.classList.remove('damaged'), 300);
             }
             
+            // Check if boss was just defeated (HP reached 0)
+            if (data.bossHP <= 0 && gameState.bossHP > 0 && gameState.gamePhase === 'fighting') {
+                socket.emit('end_fight', { reason: 'defeated' });
+
+                setTimeout(() => {
+                    el.bossImage.classList.add('defeated');
+                    createConfetti();
+                    showPhaseTransition('💀 BOSS DEFEATED! 💀', 3000);
+                    
+                    if (typeof audioSystem !== 'undefined') {
+                        audioSystem.stopBackgroundMusic();
+                        audioSystem.playBossDefeated();
+                        // Note: The previous code had a success chime here, 
+                        // but if your server sends a 'fight_ended' event, 
+                        // you might want to move this or rely on that event.
+                    }
+                }, 300);
+            }
+            
             gameState = { ...gameState, ...data };
             updateDisplay();
             if (gameState.top) updateLeaderboard(gameState.top);
@@ -1770,11 +1789,45 @@
                     clearTimeout(this.backgroundMusic);
                     this.backgroundMusic = null;
                 }
+            },
+            
+            // Continuous background music for idle/lobby
+            playIdleMusic() {
+                if (!this.context || this.backgroundMusic) return;
+                
+                const playIdleLoop = () => {
+                    if (gameState.gamePhase !== 'idle' && gameState.gamePhase !== 'ended') return;
+                    
+                    // Ambient drone
+                    this.createTone(110, 8.0, 'sine', 0.06);
+                    this.createTone(165, 8.0, 'sine', 0.05);
+                    this.createTone(220, 8.0, 'triangle', 0.04);
+                    
+                    // Slow melodic elements
+                    setTimeout(() => {
+                        const idleMelody = [330, 370, 440, 370, 330, 294, 330];
+                        idleMelody.forEach((freq, i) => {
+                            setTimeout(() => {
+                                this.createTone(freq, 0.8, 'sine', 0.08);
+                                this.createTone(freq * 2, 0.6, 'sine', 0.04);
+                            }, i * 1000);
+                        });
+                    }, 500);
+                    
+                    this.backgroundMusic = setTimeout(playIdleLoop, 10000);
+                };
+                
+                playIdleLoop();
             }
         };
         
         // Initialize audio system
         audioSystem.init();
+        
+        // Start idle music on page load
+        setTimeout(() => {
+            audioSystem.playIdleMusic();
+        }, 2000);
         
         // Add audio to existing game events
         const originalShowHitEffect = showHitEffect;
@@ -2090,6 +2143,12 @@
                     comboCount = 0;
                 }, 3000);
             }
+        });
+        
+        // Game reset restarts idle music
+        socket.on('game_reset', (data) => {
+            audioSystem.stopBackgroundMusic();
+            setTimeout(() => audioSystem.playIdleMusic(), 1000);
         });
         
         // Victory celebration enhancement

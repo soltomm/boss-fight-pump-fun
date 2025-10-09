@@ -240,32 +240,55 @@ app.get('/api/current-round', (req, res) => {
   });
 });
 
+async function getRobustBlockhash(connection, commitment) {
+    let attempts = 0;
+    while (attempts < 3) { // Try up to 3 times
+        try {
+            // Use 'processed' for maximum time
+            const blockhashData = await connection.getLatestBlockhash(commitment);
+            
+            // Basic sanity check to ensure we got a valid blockhash
+            if (blockhashData && blockhashData.blockhash) {
+                return blockhashData;
+            }
+        } catch (error) {
+            console.warn(`Attempt ${attempts + 1} failed to fetch blockhash. Retrying...`, error.message);
+            attempts++;
+            // Wait briefly before retrying to allow RPC to catch up
+            await new Promise(resolve => setTimeout(resolve, 500)); 
+        }
+    }
+    // If all attempts fail, throw the original error
+    throw new Error('Failed to fetch a recent blockhash after multiple attempts.');
+}
+
+
 app.post('/api/place-bet', async (req, res) => {
   try {
     const { walletAddress, username, amount, prediction } = req.body;
     
-    if (gamePhase !== GAME_PHASES.BETTING) {
-      return res.status(400).json({ error: 'Not in betting phase' });
-    }
-    
-    if (!currentRoundId) {
-      return res.status(400).json({ error: 'No active betting round' });
+    // 1. Initial validation
+    if (gamePhase !== GAME_PHASES.BETTING || !currentRoundId) {
+      return res.status(400).json({ error: 'Betting is closed or no round is active' });
     }
     
     const bettor = new PublicKey(walletAddress);
     const [betPDA] = getBetPDA(currentRoundId, bettor);
     const amountLamports = Math.floor(amount * LAMPORTS_PER_SOL);
     
+    // 2. Check for existing bet (using a more concise try/catch)
     try {
+      // If this fetch succeeds, the bet exists.
       await program.account.betAccount.fetch(betPDA);
       return res.status(400).json({ error: 'Bet already placed for this round' });
     } catch (err) {
-      // Bet doesn't exist, which is what we want
+      // If fetch fails, the bet doesn't exist. Proceed.
     }
     
     const predictionEnum = prediction === 'death' ? { death: {} } : { survival: {} };
     
-    const tx = await program.methods
+    // 3. Build the Transaction Instructions
+    const transaction = await program.methods
       .placeBet(new BN(amountLamports), predictionEnum, username)
       .accounts({
         bettingRound: bettingRoundPDA,
@@ -274,15 +297,25 @@ app.post('/api/place-bet', async (req, res) => {
         bettor: bettor,
         systemProgram: SystemProgram.programId,
       })
-      .transaction();
+      .transaction(); // Get the Transaction object
+      
+    // 4. Fetch FRESH Blockhash with 'confirmed' commitment 🔑
+    // 'confirmed' is newer than 'finalized', providing more expiration time (around 32 more slots).
+    const { blockhash, lastValidBlockHeight } = await getRobustBlockhash(
+            connection, 
+            'processed' // Use 'processed' here
+        );
     
-    // Get FRESH blockhash - this makes each transaction unique
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
-    tx.recentBlockhash = blockhash;
-    tx.lastValidBlockHeight = lastValidBlockHeight;
-    tx.feePayer = bettor;
+    // 5. Populate Transaction Metadata
+    transaction.recentBlockhash = blockhash;
+    // NOTE: transaction.lastValidBlockHeight is an older field. The client wallet 
+    // should read this from the returned data (step 6) to set the blockhash lifetime.
+    transaction.feePayer = bettor;
     
-    const serializedTx = tx.serialize({ 
+    // 6. Serialize and Respond
+    // It's generally safer to use a modern Versioned Transaction if supported by your SDKs.
+    // For legacy support, your serialization is correct.
+    const serializedTx = transaction.serialize({ 
       requireAllSignatures: false,
       verifySignatures: false 
     });
@@ -291,13 +324,15 @@ app.post('/api/place-bet', async (req, res) => {
     res.json({
       success: true,
       transaction: base64Tx,
-      blockhash: blockhash, // Send blockhash to client
-      lastValidBlockHeight: lastValidBlockHeight,
+      blockhash: blockhash, 
+      lastValidBlockHeight: lastValidBlockHeight, // Client uses this for retries
       message: 'Transaction prepared for signing'
     });
     
   } catch (error) {
     console.error('Error preparing bet transaction:', error);
+    // Use a more specific 400 for errors like invalid public key if possible, 
+    // but 500 is fine for unhandled internal errors.
     res.status(500).json({ error: 'Error preparing bet transaction' });
   }
 });
@@ -388,6 +423,11 @@ io.on('connection', (socket) => {
       socket.emit('admin:error', { message: 'Unauthorized' });
     }
   });
+  socket.on('end_fight', async (data) => {
+        if (data.reason === 'defeated') {
+            await endFight('defeated');
+        }
+    });
 });
 
 server.listen(PORT, () => {
