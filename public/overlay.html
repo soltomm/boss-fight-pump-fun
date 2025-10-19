@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Apex Gauntlet</title>
-    <link rel="icon" type="image/png" href="apex_logo.png">
+    <title>Alpha Raid</title>
+    <link rel="icon" type="image/png" href="raid_logo_no_back.png">
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
     <style>
@@ -113,9 +113,9 @@
         }
 
         .small-logo {
-            width: 90%;
-            height: 90%;
-            object-fit: contain;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
         }
 
         .game-title {
@@ -851,9 +851,9 @@
     
     <div class="container">
         <div class="corner-logo">
-            <img src="apex_logo.png" alt="Logo" class="small-logo">
+            <img src="raid_logo_no_back.png" alt="Logo" class="small-logo">
         </div>
-        <div class="game-title">APEX GAUNTLET</div>
+        <div class="game-title">ALPHA RAID</div>
         
         <div class="left-panel">
             <div class="card">
@@ -1076,7 +1076,7 @@
             const statusTexts = {
                 'idle': 'Waiting for game to start...',
                 'betting': '⚡ Betting phase active!',
-                'fighting': '⚔️ Apex Gauntlet in progress!',
+                'fighting': '⚔️ Raid in progress!',
                 'ended': gameState.bossDefeated ? '💀 Boss defeated!' : '🛡️ Boss survived!'
             };
             el.bossStatus.innerHTML = `<span class="status-indicator ${gameState.connected ? 'status-connected' : 'status-disconnected'}"></span>${statusTexts[gameState.gamePhase] || ''}`;
@@ -1519,7 +1519,7 @@
         // Initialize
         updateDisplay();
         setTimeout(() => {
-            showMessage('🎮 Welcome to Apex Gauntlet! Connect your wallet to start betting.');
+            showMessage('🎮 Welcome to Alpha Raid! Connect your wallet to start betting.');
         }, 1000);
         
         // ============================================

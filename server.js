@@ -635,12 +635,12 @@ async function startFightingPhase(retryCount = 0) {
       await loadBettingData();
     }
     
-    console.log('Fighting phase started! Apex Gauntlet begins now.');
+    console.log('Fighting phase started! Raid begins now.');
     
     io.emit('phase_change', {
       gamePhase,
       timeRemaining: FIGHT_DURATION * 1000,
-      message: 'Apex Gauntlet started! You have 1 minute to defeat the boss!'
+      message: 'Raid started! You have 1 minute to defeat the boss!'
     });
     
     gameTimer = setTimeout(() => {
