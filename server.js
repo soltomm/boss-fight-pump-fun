@@ -78,6 +78,7 @@ function getAnchorDiscriminator(name) {
 const BET_ACCOUNT_DISCRIMINATOR = getAnchorDiscriminator('BetAccount');
 
 // Load authority keypair with better error handling
+const connection = new Connection(SOLANA_RPC_URL, 'confirmed');
 let authorityKeypair;
 try {
   // Check for Vercel env variable first (Base58 format)
@@ -113,7 +114,6 @@ try {
 }
 
 // Solana connection and program setup
-const connection = new Connection(SOLANA_RPC_URL, 'confirmed');
 const wallet = new Wallet(authorityKeypair);
 const provider = new AnchorProvider(connection, wallet, { commitment: 'confirmed' });
 const programId = new PublicKey(PROGRAM_ID_STR);
