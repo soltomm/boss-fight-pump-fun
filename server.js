@@ -427,7 +427,7 @@ io.on('connection', (socket) => {
 
 server.listen(PORT, () => {
   console.log(`Server listening on http://localhost:${PORT}`);
-  console.log(`Overlay page: http://localhost:${PORT}/overlay.html`);
+  console.log(`Overlay page: http://localhost:${PORT}/index.html`);
   console.log(`Authority: ${authorityKeypair.publicKey.toString()}`);
   console.log(`Treasury: ${TREASURY_WALLET}`);
   console.log(`Program ID: ${PROGRAM_ID_STR}`);
