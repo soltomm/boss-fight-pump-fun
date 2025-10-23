@@ -1563,62 +1563,180 @@
             if (!wallet.connected) await connectWallet();
         });
         
-        async function connectWallet() {
-            try {
-                if (window.solana && window.solana.isPhantom) {
-                    const response = await window.solana.connect();
-                    wallet.connected = true;
-                    wallet.address = response.publicKey.toString();
-                    wallet.phantom = window.solana;
-                    wallet.publicKey = response.publicKey;
-                    
-                    el.connectWallet.textContent = '✅ WALLET CONNECTED';
-                    el.connectWallet.classList.add('wallet-connected');
-                    el.walletAddress.textContent = `${wallet.address.substring(0, 8)}...${wallet.address.substring(wallet.address.length - 8)}`;
-                    el.walletAddress.style.display = 'block';
-                    
-                    if (gameState.gamePhase === 'betting') {
-                        el.betForm.classList.add('active');
-                        await loadBettingData();
-                    }
-                    
-                    showMessage('✅ Wallet connected successfully!');
-                } else {
-                    showMessage('⚠️ Phantom wallet not found. Please install Phantom.');
-                    window.open('https://phantom.app/', '_blank');
-                }
-            } catch (error) {
-                console.error('Error connecting wallet:', error);
-                showMessage('❌ Error connecting wallet. Please try again.');
-            }
+        // ============================================
+// IMPROVED PHANTOM WALLET CONNECTION
+// ============================================
+
+// Better Phantom detection function
+function getPhantomProvider() {
+    if ('phantom' in window) {
+        const phantomProvider = window.phantom?.solana;
+        
+        if (phantomProvider?.isPhantom) {
+            return phantomProvider;
+        }
+    }
+    
+    // Fallback for older Phantom versions
+    if ('solana' in window) {
+        const provider = window.solana;
+        if (provider?.isPhantom) {
+            return provider;
+        }
+    }
+    
+    return null;
+}
+
+// Wait for Phantom to be fully loaded
+async function waitForPhantom(maxWaitTime = 3000) {
+    const startTime = Date.now();
+    
+    while (Date.now() - startTime < maxWaitTime) {
+        const provider = getPhantomProvider();
+        if (provider) {
+            return provider;
+        }
+        // Wait 100ms before checking again
+        await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    return null;
+}
+
+// Replace your existing connectWallet function with this:
+async function connectWallet() {
+    try {
+        console.log('Attempting to connect wallet...');
+        
+        // Wait for Phantom to be available
+        const provider = await waitForPhantom();
+        
+        if (!provider) {
+            console.log('Phantom not found');
+            showMessage('⚠️ Phantom wallet not found. Please install Phantom.');
+            el.connectWallet.textContent = 'INSTALL PHANTOM';
+            el.connectWallet.onclick = () => window.open('https://phantom.app/', '_blank');
+            return;
         }
         
-        // Auto-connect on load
-        window.addEventListener('load', async () => {
-            if (window.solana && window.solana.isPhantom) {
-                try {
-                    const response = await window.solana.connect({ onlyIfTrusted: true });
-                    wallet.connected = true;
-                    wallet.address = response.publicKey.toString();
-                    wallet.phantom = window.solana;
-                    wallet.publicKey = response.publicKey;
-                    
-                    el.connectWallet.textContent = '✅ WALLET CONNECTED';
-                    el.connectWallet.classList.add('wallet-connected');
-                    el.walletAddress.textContent = `${wallet.address.substring(0, 8)}...${wallet.address.substring(wallet.address.length - 8)}`;
-                    el.walletAddress.style.display = 'block';
-                    
-                    if (gameState.gamePhase === 'betting') {
-                        await loadBettingData();
-                    }
-                } catch (err) {
-                    console.log('Auto-connect not approved');
-                }
-            } else {
-                el.connectWallet.textContent = 'INSTALL PHANTOM';
-                el.connectWallet.onclick = () => window.open('https://phantom.app/', '_blank');
-            }
-        });
+        console.log('Phantom detected, requesting connection...');
+        
+        // Connect to Phantom
+        const response = await provider.connect();
+        
+        console.log('Connected:', response.publicKey.toString());
+        
+        wallet.connected = true;
+        wallet.address = response.publicKey.toString();
+        wallet.phantom = provider;
+        wallet.publicKey = response.publicKey;
+        
+        el.connectWallet.textContent = '✅ WALLET CONNECTED';
+        el.connectWallet.classList.add('wallet-connected');
+        el.walletAddress.textContent = `${wallet.address.substring(0, 8)}...${wallet.address.substring(wallet.address.length - 8)}`;
+        el.walletAddress.style.display = 'block';
+        
+        if (gameState.gamePhase === 'betting') {
+            el.betForm.classList.add('active');
+            await loadBettingData();
+        }
+        
+        showMessage('✅ Wallet connected successfully!');
+        audioSystem.playWalletConnected();
+        
+    } catch (error) {
+        console.error('Error connecting wallet:', error);
+        
+        if (error.code === 4001) {
+            showMessage('❌ Connection rejected. Please try again.');
+        } else {
+            showMessage('❌ Error connecting wallet: ' + error.message);
+        }
+    }
+}
+
+// Replace your window.load event listener with this:
+window.addEventListener('load', async () => {
+    console.log('Page loaded, checking for Phantom...');
+    
+    // Wait a bit for Phantom to inject
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    const provider = getPhantomProvider();
+    
+    if (!provider) {
+        console.log('Phantom not detected');
+        el.connectWallet.textContent = 'INSTALL PHANTOM';
+        el.connectWallet.onclick = () => window.open('https://phantom.app/', '_blank');
+        return;
+    }
+    
+    console.log('Phantom detected, attempting auto-connect...');
+    
+    try {
+        // Try to auto-connect if previously approved
+        const response = await provider.connect({ onlyIfTrusted: true });
+        
+        console.log('Auto-connected:', response.publicKey.toString());
+        
+        wallet.connected = true;
+        wallet.address = response.publicKey.toString();
+        wallet.phantom = provider;
+        wallet.publicKey = response.publicKey;
+        
+        el.connectWallet.textContent = '✅ WALLET CONNECTED';
+        el.connectWallet.classList.add('wallet-connected');
+        el.walletAddress.textContent = `${wallet.address.substring(0, 8)}...${wallet.address.substring(wallet.address.length - 8)}`;
+        el.walletAddress.style.display = 'block';
+        
+        if (gameState.gamePhase === 'betting') {
+            await loadBettingData();
+        }
+    } catch (err) {
+        console.log('Auto-connect not approved:', err.message);
+        el.connectWallet.textContent = 'CONNECT PHANTOM';
+    }
+    
+    // Listen for account changes
+    provider.on('accountChanged', (publicKey) => {
+        if (publicKey) {
+            console.log('Account changed:', publicKey.toString());
+            wallet.address = publicKey.toString();
+            wallet.publicKey = publicKey;
+            el.walletAddress.textContent = `${wallet.address.substring(0, 8)}...${wallet.address.substring(wallet.address.length - 8)}`;
+            showMessage('🔄 Wallet account changed');
+        } else {
+            // User disconnected
+            wallet.connected = false;
+            wallet.address = null;
+            wallet.publicKey = null;
+            el.connectWallet.textContent = 'CONNECT PHANTOM';
+            el.connectWallet.classList.remove('wallet-connected');
+            el.walletAddress.style.display = 'none';
+            el.betForm.classList.remove('active');
+            showMessage('👋 Wallet disconnected');
+        }
+    });
+    
+    // Listen for disconnect
+    provider.on('disconnect', () => {
+        console.log('Wallet disconnected');
+        wallet.connected = false;
+        wallet.address = null;
+        wallet.publicKey = null;
+        el.connectWallet.textContent = 'CONNECT PHANTOM';
+        el.connectWallet.classList.remove('wallet-connected');
+        el.walletAddress.style.display = 'none';
+        el.betForm.classList.remove('active');
+        showMessage('👋 Wallet disconnected');
+    });
+});
+
+// Debug helper - add this temporarily to check what's available
+console.log('Window.phantom:', window.phantom);
+console.log('Window.solana:', window.solana);
+console.log('Phantom provider:', getPhantomProvider());
         
         async function loadBettingData() {
             if (!wallet.connected || !gameState.currentRoundId) return;
