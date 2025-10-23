@@ -152,7 +152,12 @@
           "signer": true
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "final_hp",
+          "type": "u32"
+        }
+      ]
     },
     {
       "name": "initialize_betting_round",

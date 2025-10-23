@@ -950,11 +950,307 @@
 
         // Solana configuration
         const PROGRAM_ID = new solanaWeb3.PublicKey('FtQbMDA7w8a9icfbMkuTxxQ695Wp9e6RQFSGVjmYQgz3');
-        const DEVNET_RPC = 'https://api.devnet.solana.com';
+        const DEVNET_RPC = 'https://api.test.solana.com';
         const connection = new solanaWeb3.Connection(DEVNET_RPC, 'confirmed');
         
         // Socket connection
         const socket = io();
+        const audioSystem = {
+            context: null,
+            masterVolume: 0.5,
+            sounds: {},
+            backgroundMusic: null,
+        
+            init() {
+                // Create audio context on first user interaction
+                document.addEventListener('click', () => {
+                    if (!this.context) {
+                        this.context = new (window.AudioContext || window.webkitAudioContext)();
+                        console.log('Audio system initialized');
+                    }
+                }, { once: true });
+            },
+            
+            // Create synthetic sounds using Web Audio API
+            createTone(frequency, duration, type = 'sine', volume = 0.3) {
+                if (!this.context) return;
+                
+                const oscillator = this.context.createOscillator();
+                const gainNode = this.context.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.context.destination);
+                
+                oscillator.type = type;
+                oscillator.frequency.setValueAtTime(frequency, this.context.currentTime);
+                
+                gainNode.gain.setValueAtTime(volume * this.masterVolume, this.context.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + duration);
+                
+                oscillator.start(this.context.currentTime);
+                oscillator.stop(this.context.currentTime + duration);
+            },
+            
+            // Boss hit sound - aggressive impact
+            playBossHit() {
+                if (!this.context) return;
+                
+                // Low punch sound
+                this.createTone(80, 0.15, 'sawtooth', 0.4);
+                setTimeout(() => this.createTone(60, 0.1, 'square', 0.3), 50);
+                
+                // High impact crack
+                setTimeout(() => {
+                    this.createTone(1200, 0.08, 'square', 0.25);
+                    this.createTone(800, 0.1, 'sawtooth', 0.2);
+                }, 30);
+                
+                // Rumble
+                setTimeout(() => this.createTone(40, 0.2, 'triangle', 0.15), 100);
+            },
+            
+            // Boss heal sound - mystical recovery
+            playBossHeal() {
+                if (!this.context) return;
+                
+                // Ascending magical tones
+                const notes = [262, 330, 392, 523, 659]; // C major arpeggio
+                notes.forEach((freq, i) => {
+                    setTimeout(() => {
+                        this.createTone(freq, 0.3, 'sine', 0.2);
+                        this.createTone(freq * 2, 0.25, 'sine', 0.1); // Harmonic
+                    }, i * 80);
+                });
+                
+                // Shimmer effect
+                setTimeout(() => {
+                    this.createTone(1047, 0.5, 'sine', 0.15);
+                    this.createTone(1319, 0.5, 'sine', 0.12);
+                }, 300);
+            },
+            
+            // Betting phase start - exciting buildup
+            playBettingStart() {
+                if (!this.context) return;
+                
+                // Rising tension
+                const frequencies = [220, 277, 330, 440];
+                frequencies.forEach((freq, i) => {
+                    setTimeout(() => {
+                        this.createTone(freq, 0.2, 'square', 0.25);
+                        this.createTone(freq * 1.5, 0.15, 'sine', 0.15);
+                    }, i * 100);
+                });
+                
+                // Climax chord
+                setTimeout(() => {
+                    this.createTone(440, 0.5, 'sawtooth', 0.3);
+                    this.createTone(554, 0.5, 'sawtooth', 0.25);
+                    this.createTone(659, 0.5, 'sawtooth', 0.2);
+                }, 400);
+            },
+            
+            // Fight start - epic battle horn
+            playFightStart() {
+                if (!this.context) return;
+                
+                // War horn
+                this.createTone(165, 0.4, 'sawtooth', 0.35);
+                setTimeout(() => this.createTone(220, 0.4, 'sawtooth', 0.35), 100);
+                setTimeout(() => this.createTone(277, 0.6, 'sawtooth', 0.4), 200);
+                
+                // Drums
+                setTimeout(() => {
+                    for (let i = 0; i < 4; i++) {
+                        setTimeout(() => {
+                            this.createTone(80, 0.1, 'square', 0.4);
+                            this.createTone(60, 0.12, 'triangle', 0.3);
+                        }, i * 150);
+                    }
+                }, 300);
+            },
+            
+            // Boss defeated - victory fanfare
+            playBossDefeated() {
+                if (!this.context) return;
+                
+                // Victory melody
+                const victoryNotes = [
+                    { freq: 523, duration: 0.15 }, // C
+                    { freq: 659, duration: 0.15 }, // E
+                    { freq: 784, duration: 0.15 }, // G
+                    { freq: 1047, duration: 0.4 }  // High C
+                ];
+                
+                victoryNotes.forEach((note, i) => {
+                    setTimeout(() => {
+                        this.createTone(note.freq, note.duration, 'triangle', 0.3);
+                        this.createTone(note.freq * 2, note.duration, 'sine', 0.15);
+                    }, i * 180);
+                });
+                
+                // Triumphant chord at the end
+                setTimeout(() => {
+                    this.createTone(523, 0.8, 'sine', 0.25);
+                    this.createTone(659, 0.8, 'sine', 0.2);
+                    this.createTone(784, 0.8, 'sine', 0.18);
+                    this.createTone(1047, 0.8, 'sine', 0.15);
+                }, 720);
+            },
+            
+            // Boss survived - somber defeat
+            playBossSurvived() {
+                if (!this.context) return;
+                
+                // Descending sad melody
+                const defeatNotes = [
+                    { freq: 440, duration: 0.3 },  // A
+                    { freq: 392, duration: 0.3 },  // G
+                    { freq: 349, duration: 0.3 },  // F
+                    { freq: 330, duration: 0.6 }   // E
+                ];
+                
+                defeatNotes.forEach((note, i) => {
+                    setTimeout(() => {
+                        this.createTone(note.freq, note.duration, 'sine', 0.25);
+                        this.createTone(note.freq - 20, note.duration, 'sine', 0.15);
+                    }, i * 350);
+                });
+                
+                // Final low drone
+                setTimeout(() => {
+                    this.createTone(110, 1.0, 'triangle', 0.2);
+                }, 1400);
+            },
+            
+            // Wallet connected - success chime
+            playWalletConnected() {
+                if (!this.context) return;
+                
+                this.createTone(659, 0.15, 'sine', 0.25);
+                setTimeout(() => this.createTone(784, 0.15, 'sine', 0.25), 100);
+                setTimeout(() => this.createTone(1047, 0.3, 'sine', 0.3), 200);
+            },
+            
+            // Bet placed - confirmation beep
+            playBetPlaced() {
+                if (!this.context) return;
+                
+                this.createTone(880, 0.1, 'square', 0.25);
+                setTimeout(() => this.createTone(1100, 0.15, 'square', 0.25), 80);
+            },
+            
+            // Timer warning - urgent beeps
+            playTimerWarning() {
+                if (!this.context) return;
+                
+                this.createTone(800, 0.08, 'square', 0.2);
+                setTimeout(() => this.createTone(800, 0.08, 'square', 0.2), 150);
+            },
+            
+            // Background ambient music for betting phase
+            playBettingMusic() {
+                if (!this.context || this.backgroundMusic) return;
+                
+                const playAmbientLoop = () => {
+                    if (gameState.gamePhase !== 'betting') return;
+                    
+                    // Soft ambient pad
+                    const chordNotes = [220, 277, 330, 440];
+                    chordNotes.forEach((freq, i) => {
+                        setTimeout(() => {
+                            this.createTone(freq, 4.0, 'sine', 0.08);
+                        }, i * 50);
+                    });
+                    
+                    // Melodic element
+                    setTimeout(() => {
+                        const melody = [440, 494, 523, 494, 440, 392];
+                        melody.forEach((freq, i) => {
+                            setTimeout(() => {
+                                this.createTone(freq, 0.4, 'triangle', 0.1);
+                            }, i * 600);
+                        });
+                    }, 1000);
+                    
+                    this.backgroundMusic = setTimeout(playAmbientLoop, 8000);
+                };
+                
+                playAmbientLoop();
+            },
+            
+            // Background battle music for fighting phase
+            playFightingMusic() {
+                if (!this.context || this.backgroundMusic) return;
+                
+                const playBattleLoop = () => {
+                    if (gameState.gamePhase !== 'fighting') return;
+                    
+                    // Intense rhythm
+                    const beats = [0, 250, 500, 750];
+                    beats.forEach(delay => {
+                        setTimeout(() => {
+                            this.createTone(110, 0.15, 'square', 0.15);
+                            this.createTone(55, 0.2, 'triangle', 0.12);
+                        }, delay);
+                    });
+                    
+                    // Aggressive melody
+                    setTimeout(() => {
+                        const battleMelody = [330, 370, 440, 370, 330, 294];
+                        battleMelody.forEach((freq, i) => {
+                            setTimeout(() => {
+                                this.createTone(freq, 0.2, 'sawtooth', 0.12);
+                            }, i * 300);
+                        });
+                    }, 1000);
+                    
+                    this.backgroundMusic = setTimeout(playBattleLoop, 3000);
+                };
+                
+                playBattleLoop();
+            },
+            
+            stopBackgroundMusic() {
+                if (this.backgroundMusic) {
+                    clearTimeout(this.backgroundMusic);
+                    this.backgroundMusic = null;
+                }
+            },
+            
+            // Continuous background music for idle/lobby
+            playIdleMusic() {
+                if (!this.context || this.backgroundMusic) return;
+                
+                const playIdleLoop = () => {
+                    if (gameState.gamePhase !== 'idle' && gameState.gamePhase !== 'ended') return;
+                    
+                    // Ambient drone
+                    this.createTone(110, 8.0, 'sine', 0.06);
+                    this.createTone(165, 8.0, 'sine', 0.05);
+                    this.createTone(220, 8.0, 'triangle', 0.04);
+                    
+                    // Slow melodic elements
+                    setTimeout(() => {
+                        const idleMelody = [330, 370, 440, 370, 330, 294, 330];
+                        idleMelody.forEach((freq, i) => {
+                            setTimeout(() => {
+                                this.createTone(freq, 0.8, 'sine', 0.08);
+                                this.createTone(freq * 2, 0.6, 'sine', 0.04);
+                            }, i * 1000);
+                        });
+                    }, 500);
+                    
+                    this.backgroundMusic = setTimeout(playIdleLoop, 10000);
+                };
+                
+                playIdleLoop();
+            }
+        };
+        
+        // Initialize audio system
+        audioSystem.init();
+        
         
         // Game state
         let gameState = {
@@ -1151,23 +1447,23 @@
             }
             
             // Check if boss was just defeated (HP reached 0)
-            if (data.bossHP <= 0 && gameState.bossHP > 0 && gameState.gamePhase === 'fighting') {
-                socket.emit('end_fight', { reason: 'defeated' });
+            // if (data.bossHP <= 0 && gameState.bossHP > 0 && gameState.gamePhase === 'fighting') {
+            //     socket.emit('end_fight', { reason: 'defeated' });
 
-                setTimeout(() => {
-                    el.bossImage.classList.add('defeated');
-                    createConfetti();
-                    showPhaseTransition('💀 BOSS DEFEATED! 💀', 3000);
+            //     setTimeout(() => {
+            //         el.bossImage.classList.add('defeated');
+            //         createConfetti();
+            //         showPhaseTransition('💀 BOSS DEFEATED! 💀', 3000);
                     
-                    if (typeof audioSystem !== 'undefined') {
-                        audioSystem.stopBackgroundMusic();
-                        audioSystem.playBossDefeated();
-                        // Note: The previous code had a success chime here, 
-                        // but if your server sends a 'fight_ended' event, 
-                        // you might want to move this or rely on that event.
-                    }
-                }, 300);
-            }
+            //         if (typeof audioSystem !== 'undefined') {
+            //             audioSystem.stopBackgroundMusic();
+            //             audioSystem.playBossDefeated();
+            //             // Note: The previous code had a success chime here, 
+            //             // but if your server sends a 'fight_ended' event, 
+            //             // you might want to move this or rely on that event.
+            //         }
+            //     }, 300);
+            // }
             
             gameState = { ...gameState, ...data };
             updateDisplay();
@@ -1525,302 +1821,6 @@
         // ============================================
         // AUDIO SYSTEM WITH ENGAGING SOUNDTRACKS
         // ============================================
-        
-        const audioSystem = {
-            context: null,
-            masterVolume: 0.5,
-            sounds: {},
-            backgroundMusic: null,
-            
-            init() {
-                // Create audio context on first user interaction
-                document.addEventListener('click', () => {
-                    if (!this.context) {
-                        this.context = new (window.AudioContext || window.webkitAudioContext)();
-                        console.log('Audio system initialized');
-                    }
-                }, { once: true });
-            },
-            
-            // Create synthetic sounds using Web Audio API
-            createTone(frequency, duration, type = 'sine', volume = 0.3) {
-                if (!this.context) return;
-                
-                const oscillator = this.context.createOscillator();
-                const gainNode = this.context.createGain();
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(this.context.destination);
-                
-                oscillator.type = type;
-                oscillator.frequency.setValueAtTime(frequency, this.context.currentTime);
-                
-                gainNode.gain.setValueAtTime(volume * this.masterVolume, this.context.currentTime);
-                gainNode.gain.exponentialRampToValueAtTime(0.01, this.context.currentTime + duration);
-                
-                oscillator.start(this.context.currentTime);
-                oscillator.stop(this.context.currentTime + duration);
-            },
-            
-            // Boss hit sound - aggressive impact
-            playBossHit() {
-                if (!this.context) return;
-                
-                // Low punch sound
-                this.createTone(80, 0.15, 'sawtooth', 0.4);
-                setTimeout(() => this.createTone(60, 0.1, 'square', 0.3), 50);
-                
-                // High impact crack
-                setTimeout(() => {
-                    this.createTone(1200, 0.08, 'square', 0.25);
-                    this.createTone(800, 0.1, 'sawtooth', 0.2);
-                }, 30);
-                
-                // Rumble
-                setTimeout(() => this.createTone(40, 0.2, 'triangle', 0.15), 100);
-            },
-            
-            // Boss heal sound - mystical recovery
-            playBossHeal() {
-                if (!this.context) return;
-                
-                // Ascending magical tones
-                const notes = [262, 330, 392, 523, 659]; // C major arpeggio
-                notes.forEach((freq, i) => {
-                    setTimeout(() => {
-                        this.createTone(freq, 0.3, 'sine', 0.2);
-                        this.createTone(freq * 2, 0.25, 'sine', 0.1); // Harmonic
-                    }, i * 80);
-                });
-                
-                // Shimmer effect
-                setTimeout(() => {
-                    this.createTone(1047, 0.5, 'sine', 0.15);
-                    this.createTone(1319, 0.5, 'sine', 0.12);
-                }, 300);
-            },
-            
-            // Betting phase start - exciting buildup
-            playBettingStart() {
-                if (!this.context) return;
-                
-                // Rising tension
-                const frequencies = [220, 277, 330, 440];
-                frequencies.forEach((freq, i) => {
-                    setTimeout(() => {
-                        this.createTone(freq, 0.2, 'square', 0.25);
-                        this.createTone(freq * 1.5, 0.15, 'sine', 0.15);
-                    }, i * 100);
-                });
-                
-                // Climax chord
-                setTimeout(() => {
-                    this.createTone(440, 0.5, 'sawtooth', 0.3);
-                    this.createTone(554, 0.5, 'sawtooth', 0.25);
-                    this.createTone(659, 0.5, 'sawtooth', 0.2);
-                }, 400);
-            },
-            
-            // Fight start - epic battle horn
-            playFightStart() {
-                if (!this.context) return;
-                
-                // War horn
-                this.createTone(165, 0.4, 'sawtooth', 0.35);
-                setTimeout(() => this.createTone(220, 0.4, 'sawtooth', 0.35), 100);
-                setTimeout(() => this.createTone(277, 0.6, 'sawtooth', 0.4), 200);
-                
-                // Drums
-                setTimeout(() => {
-                    for (let i = 0; i < 4; i++) {
-                        setTimeout(() => {
-                            this.createTone(80, 0.1, 'square', 0.4);
-                            this.createTone(60, 0.12, 'triangle', 0.3);
-                        }, i * 150);
-                    }
-                }, 300);
-            },
-            
-            // Boss defeated - victory fanfare
-            playBossDefeated() {
-                if (!this.context) return;
-                
-                // Victory melody
-                const victoryNotes = [
-                    { freq: 523, duration: 0.15 }, // C
-                    { freq: 659, duration: 0.15 }, // E
-                    { freq: 784, duration: 0.15 }, // G
-                    { freq: 1047, duration: 0.4 }  // High C
-                ];
-                
-                victoryNotes.forEach((note, i) => {
-                    setTimeout(() => {
-                        this.createTone(note.freq, note.duration, 'triangle', 0.3);
-                        this.createTone(note.freq * 2, note.duration, 'sine', 0.15);
-                    }, i * 180);
-                });
-                
-                // Triumphant chord at the end
-                setTimeout(() => {
-                    this.createTone(523, 0.8, 'sine', 0.25);
-                    this.createTone(659, 0.8, 'sine', 0.2);
-                    this.createTone(784, 0.8, 'sine', 0.18);
-                    this.createTone(1047, 0.8, 'sine', 0.15);
-                }, 720);
-            },
-            
-            // Boss survived - somber defeat
-            playBossSurvived() {
-                if (!this.context) return;
-                
-                // Descending sad melody
-                const defeatNotes = [
-                    { freq: 440, duration: 0.3 },  // A
-                    { freq: 392, duration: 0.3 },  // G
-                    { freq: 349, duration: 0.3 },  // F
-                    { freq: 330, duration: 0.6 }   // E
-                ];
-                
-                defeatNotes.forEach((note, i) => {
-                    setTimeout(() => {
-                        this.createTone(note.freq, note.duration, 'sine', 0.25);
-                        this.createTone(note.freq - 20, note.duration, 'sine', 0.15);
-                    }, i * 350);
-                });
-                
-                // Final low drone
-                setTimeout(() => {
-                    this.createTone(110, 1.0, 'triangle', 0.2);
-                }, 1400);
-            },
-            
-            // Wallet connected - success chime
-            playWalletConnected() {
-                if (!this.context) return;
-                
-                this.createTone(659, 0.15, 'sine', 0.25);
-                setTimeout(() => this.createTone(784, 0.15, 'sine', 0.25), 100);
-                setTimeout(() => this.createTone(1047, 0.3, 'sine', 0.3), 200);
-            },
-            
-            // Bet placed - confirmation beep
-            playBetPlaced() {
-                if (!this.context) return;
-                
-                this.createTone(880, 0.1, 'square', 0.25);
-                setTimeout(() => this.createTone(1100, 0.15, 'square', 0.25), 80);
-            },
-            
-            // Timer warning - urgent beeps
-            playTimerWarning() {
-                if (!this.context) return;
-                
-                this.createTone(800, 0.08, 'square', 0.2);
-                setTimeout(() => this.createTone(800, 0.08, 'square', 0.2), 150);
-            },
-            
-            // Background ambient music for betting phase
-            playBettingMusic() {
-                if (!this.context || this.backgroundMusic) return;
-                
-                const playAmbientLoop = () => {
-                    if (gameState.gamePhase !== 'betting') return;
-                    
-                    // Soft ambient pad
-                    const chordNotes = [220, 277, 330, 440];
-                    chordNotes.forEach((freq, i) => {
-                        setTimeout(() => {
-                            this.createTone(freq, 4.0, 'sine', 0.08);
-                        }, i * 50);
-                    });
-                    
-                    // Melodic element
-                    setTimeout(() => {
-                        const melody = [440, 494, 523, 494, 440, 392];
-                        melody.forEach((freq, i) => {
-                            setTimeout(() => {
-                                this.createTone(freq, 0.4, 'triangle', 0.1);
-                            }, i * 600);
-                        });
-                    }, 1000);
-                    
-                    this.backgroundMusic = setTimeout(playAmbientLoop, 8000);
-                };
-                
-                playAmbientLoop();
-            },
-            
-            // Background battle music for fighting phase
-            playFightingMusic() {
-                if (!this.context || this.backgroundMusic) return;
-                
-                const playBattleLoop = () => {
-                    if (gameState.gamePhase !== 'fighting') return;
-                    
-                    // Intense rhythm
-                    const beats = [0, 250, 500, 750];
-                    beats.forEach(delay => {
-                        setTimeout(() => {
-                            this.createTone(110, 0.15, 'square', 0.15);
-                            this.createTone(55, 0.2, 'triangle', 0.12);
-                        }, delay);
-                    });
-                    
-                    // Aggressive melody
-                    setTimeout(() => {
-                        const battleMelody = [330, 370, 440, 370, 330, 294];
-                        battleMelody.forEach((freq, i) => {
-                            setTimeout(() => {
-                                this.createTone(freq, 0.2, 'sawtooth', 0.12);
-                            }, i * 300);
-                        });
-                    }, 1000);
-                    
-                    this.backgroundMusic = setTimeout(playBattleLoop, 3000);
-                };
-                
-                playBattleLoop();
-            },
-            
-            stopBackgroundMusic() {
-                if (this.backgroundMusic) {
-                    clearTimeout(this.backgroundMusic);
-                    this.backgroundMusic = null;
-                }
-            },
-            
-            // Continuous background music for idle/lobby
-            playIdleMusic() {
-                if (!this.context || this.backgroundMusic) return;
-                
-                const playIdleLoop = () => {
-                    if (gameState.gamePhase !== 'idle' && gameState.gamePhase !== 'ended') return;
-                    
-                    // Ambient drone
-                    this.createTone(110, 8.0, 'sine', 0.06);
-                    this.createTone(165, 8.0, 'sine', 0.05);
-                    this.createTone(220, 8.0, 'triangle', 0.04);
-                    
-                    // Slow melodic elements
-                    setTimeout(() => {
-                        const idleMelody = [330, 370, 440, 370, 330, 294, 330];
-                        idleMelody.forEach((freq, i) => {
-                            setTimeout(() => {
-                                this.createTone(freq, 0.8, 'sine', 0.08);
-                                this.createTone(freq * 2, 0.6, 'sine', 0.04);
-                            }, i * 1000);
-                        });
-                    }, 500);
-                    
-                    this.backgroundMusic = setTimeout(playIdleLoop, 10000);
-                };
-                
-                playIdleLoop();
-            }
-        };
-        
-        // Initialize audio system
-        audioSystem.init();
         
         // Start idle music on page load
         setTimeout(() => {

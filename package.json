@@ -7,16 +7,18 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "express": "*",
-    "socket.io": "*",
-    "ws": "*",
-    "csv-writer": "*",
-    "date-fns": "*",
-    "pump-chat-client": "*",
-    "@solana/web3.js": "^1.87.6",
     "@coral-xyz/anchor": "^0.31.1",
+    "@solana/web3.js": "^1.87.6",
+    "axios": "^1.12.2",
     "bn.js": "^5.2.1",
     "bs58": "*",
-    "crypto": "*"
+    "crypto": "*",
+    "csv-writer": "*",
+    "date-fns": "*",
+    "express": "*",
+    "pump-chat-client": "*",
+    "socket.io": "*",
+    "socket.io-client": "^4.8.1",
+    "ws": "^8.18.3"
   }
 }

@@ -50,7 +50,7 @@ const TRIGGER_KEYWORDS = (process.env.TRIGGER_KEYWORDS || 'HIT,■■').split(',
 const HEAL_KEYWORDS = (process.env.HEAL_KEYWORDS || 'HEAL,❤■').split(',').map(s => s.trim()).filter(Boolean);
 const INITIAL_HP = process.env.INITIAL_HP ? Number(process.env.INITIAL_HP) : 30;
 const EXPORT_DIR = process.env.EXPORT_DIR || path.join(__dirname, 'exports');
-const SOLANA_RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.devnet.solana.com';
+const SOLANA_RPC_URL = process.env.SOLANA_RPC_URL || 'https://api.testnet.solana.com';
 const AUTHORITY_KEYPAIR_PATH = process.env.AUTHORITY_KEYPAIR_PATH ;
 const TREASURY_WALLET = process.env.TREASURY_WALLET;
 const PROGRAM_ID_STR = process.env.PROGRAM_ID || 'FtQbMDA7w8a9icfbMkuTxxQ695Wp9e6RQFSGVjmYQgz3';
@@ -423,11 +423,6 @@ io.on('connection', (socket) => {
       socket.emit('admin:error', { message: 'Unauthorized' });
     }
   });
-  socket.on('end_fight', async (data) => {
-        if (data.reason === 'defeated') {
-            await endFight('defeated');
-        }
-    });
 });
 
 server.listen(PORT, () => {
@@ -644,7 +639,7 @@ async function startFightingPhase(retryCount = 0) {
     });
     
     gameTimer = setTimeout(() => {
-      endFight('timeout');
+      endFight();
     }, FIGHT_DURATION * 1000);
     
   } catch (error) {
@@ -778,7 +773,7 @@ async function processPayouts() {
     
     const bettingRoundAccount = await program.account.bettingRound.fetch(bettingRoundPDA);
     
-    const bossDefeated = bettingRoundAccount.bossDefeated;
+    const bossDefeated = bossHP === 0;
     const totalDeathBetsLamports = bettingRoundAccount.totalDeathBets.toNumber();
     const totalSurvivalBetsLamports = bettingRoundAccount.totalSurvivalBets.toNumber();
     
@@ -888,22 +883,22 @@ async function processPayouts() {
   }
 }
 
-async function endFight(reason = 'defeated') {
+async function endFight() {
   if (gamePhase !== GAME_PHASES.FIGHTING) return;
   
   try {
     clearTimeout(gameTimer);
     
-    const bossDefeated = (reason === 'defeated' || bossHP === 0);
+    const bossDefeated = bossHP === 0;
     
-    console.log(`Ending fight: ${reason}. Boss ${bossDefeated ? 'defeated' : 'survived'}`);
+    console.log(`Ending fight. Boss ${bossDefeated ? 'defeated' : 'survived'}`);
     console.log(`Final HP: ${bossHP}/${INITIAL_HP}`);
     
     if (program) {
-      console.log('Ending fight on blockchain with final HP...');
+      console.log('Ending fight on blockchain');
       
       const tx = await program.methods
-        .endFight()
+        .endFight(new BN(bossHP))
         .accounts({
           bettingRound: bettingRoundPDA,
           authority: authorityKeypair.publicKey,
