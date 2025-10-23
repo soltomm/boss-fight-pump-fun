@@ -80,22 +80,43 @@ const BET_ACCOUNT_DISCRIMINATOR = getAnchorDiscriminator('BetAccount');
 // Load authority keypair with better error handling
 let authorityKeypair;
 try {
-  if (AUTHORITY_KEYPAIR_PATH && fs.existsSync(AUTHORITY_KEYPAIR_PATH)) {
+  // Check for Vercel env variable first (Base58 format)
+  if (process.env.AUTHORITY_SECRET_KEY) {
+    const bs58 = require('bs58');
+    authorityKeypair = Keypair.fromSecretKey(
+      bs58.decode(process.env.AUTHORITY_SECRET_KEY)
+    );
+    console.log('✅ Authority loaded from env variable');
+    console.log('🔑 Authority address:', authorityKeypair.publicKey.toString());
+  }
+  // Then check for keypair file (for local dev)
+  else if (AUTHORITY_KEYPAIR_PATH && fs.existsSync(AUTHORITY_KEYPAIR_PATH)) {
     authorityKeypair = Keypair.fromSecretKey(
       new Uint8Array(JSON.parse(fs.readFileSync(AUTHORITY_KEYPAIR_PATH, 'utf8')))
     );
-    console.log('Authority keypair loaded from:', AUTHORITY_KEYPAIR_PATH);
+    console.log('✅ Authority loaded from file:', AUTHORITY_KEYPAIR_PATH);
   } else {
-    console.warn('AUTHORITY_KEYPAIR_PATH not found, generating temporary keypair for demo');
+    console.warn('⚠️ No authority keypair found, generating temporary one');
     authorityKeypair = Keypair.generate();
-    console.log('Generated temporary authority:', authorityKeypair.publicKey.toString());
-    console.log('Note: This is for demo purposes only. In production, use a persistent keypair.');
+    console.log('🔑 Temporary authority:', authorityKeypair.publicKey.toString());
+    console.log('⚠️ This wallet has NO SOL. Airdrop required!');
   }
+  
+  // Always log the address and check balance
+  console.log('🔑 Authority Public Key:', authorityKeypair.publicKey.toString());
+  
+  const balance = await connection.getBalance(authorityKeypair.publicKey);
+  console.log('💰 Current balance:', balance / LAMPORTS_PER_SOL, 'SOL');
+  
+  if (balance < 0.01 * LAMPORTS_PER_SOL) {
+    console.error('❌ INSUFFICIENT BALANCE!');
+    console.log('💸 Airdrop command:');
+    console.log(`solana airdrop 5 ${authorityKeypair.publicKey.toString()} --url devnet`);
+  }
+  
 } catch (error) {
-  console.error('Error loading authority keypair:', error.message);
-  console.log('Generating temporary keypair for demo purposes...');
-  authorityKeypair = Keypair.generate();
-  console.log('Generated temporary authority:', authorityKeypair.publicKey.toString());
+  console.error('❌ Error loading authority keypair:', error.message);
+  process.exit(1); // Don't run without proper auth
 }
 
 // Solana connection and program setup
