@@ -41,7 +41,21 @@ const {
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
+
+// Configuration for Socket.IO CORS
+const io = new Server(server, {
+    cors: {
+        // You MUST list the origin(s) where your client-side code is running
+        origin: [
+            "http://localhost:3000", // For local development testing
+            "https://boss-fight-pump-fun.onrender.com", // If your client is served from the same domain
+            "https://boss-fight-pump-fun.vercel.app/"
+            // Add any other domains that might host your overlay here
+        ],
+        methods: ["GET", "POST"], // Standard methods for Socket.IO polling
+        credentials: true
+    }
+});
 
 // Configuration
 const PORT = process.env.PORT ? Number(process.env.PORT) : 3000;
