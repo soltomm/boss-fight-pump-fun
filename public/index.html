@@ -1390,8 +1390,6 @@
             
             el.deathPool.textContent = `${(gameState.totalDeathBets || 0).toFixed(2)} SOL`;
             el.survivalPool.textContent = `${(gameState.totalSurvivalBets || 0).toFixed(2)} SOL`;
-            el.deathBets.textContent = `${gameState.totalDeathBets || 0} bets`;
-            el.survivalBets.textContent = `${gameState.totalSurvivalBets || 0} bets`;
             
             el.lastHitter.textContent = gameState.lastHitter || 'None';
             el.totalHits.textContent = gameState.totalHits || '0';
