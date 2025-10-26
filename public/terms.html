@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpha Raid - Terms of Service</title>
+    <link rel="icon" type="image/png" href="raid_logo_no_back.png">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: #0a0e27;
+            color: #e0e0e0;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(255, 0, 150, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0, 240, 255, 0.1) 0%, transparent 50%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .header {
+            background: rgba(10, 14, 39, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid rgba(0, 240, 255, 0.3);
+            padding: 20px 40px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 240, 255, 0.5);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+        }
+
+        .site-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #00f0ff;
+            text-shadow: 0 0 20px #00f0ff;
+            letter-spacing: 3px;
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #00f0ff, #0080ff);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 240, 255, 0.4);
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(0, 240, 255, 0.6);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .tos-card {
+            background: rgba(10, 14, 39, 0.85);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 50px;
+            border: 2px solid rgba(0, 240, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 900;
+            text-align: center;
+            color: #00f0ff;
+            text-shadow: 0 0 30px #00f0ff;
+            margin-bottom: 15px;
+            letter-spacing: 4px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .last-updated {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.95rem;
+            margin-bottom: 40px;
+            font-style: italic;
+        }
+
+        h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            color: #ffd700;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px #ffd700;
+            border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            color: #00f0ff;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px #00f0ff;
+        }
+
+        p {
+            margin-bottom: 15px;
+            font-size: 1.05rem;
+            color: #e0e0e0;
+        }
+
+        ul {
+            margin: 15px 0 15px 30px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            font-size: 1.05rem;
+            color: #e0e0e0;
+        }
+
+        .warning-box {
+            background: rgba(255, 0, 128, 0.15);
+            border-left: 5px solid #ff0080;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255, 0, 128, 0.2);
+        }
+
+        .warning-box strong {
+            color: #ff0080;
+            font-size: 1.2rem;
+            display: block;
+            margin-bottom: 10px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .info-box {
+            background: rgba(0, 240, 255, 0.15);
+            border-left: 5px solid #00f0ff;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+        }
+
+        .info-box strong {
+            color: #00f0ff;
+            font-size: 1.2rem;
+            display: block;
+            margin-bottom: 10px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        strong {
+            color: #ffd700;
+            font-weight: 700;
+        }
+
+        .acceptance-section {
+            background: rgba(0, 240, 255, 0.1);
+            border: 2px solid rgba(0, 240, 255, 0.4);
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 15px;
+            text-align: center;
+        }
+
+        .acceptance-section p {
+            font-size: 1.1rem;
+            color: #00f0ff;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .tos-card {
+                padding: 30px 25px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .container {
+                padding: 0 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <img src="raid_logo_no_back.png" alt="Alpha Raid Logo" class="logo">
+                <div class="site-title">ALPHA RAID</div>
+            </div>
+            <a href="index.html" class="back-btn">← BACK TO GAME</a>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="tos-card">
+            <h1>TERMS OF SERVICE</h1>
+            <p class="subtitle">Alpha Raid Boss-Fighting Gaming Platform</p>
+            <p class="last-updated">Last Updated: October 26, 2025</p>
+
+            <div class="acceptance-section">
+                <p>By accessing or using Alpha Raid, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.</p>
+            </div>
+
+            <h2>1. ACCEPTANCE OF TERMS</h2>
+            <p>By accessing, using, or participating in Alpha Raid (the "Platform"), you ("User," "Player," or "you") acknowledge that you have read, understood, and agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, you must not access or use the Platform.</p>
+            <p>These Terms constitute a legally binding agreement between you and Alpha Raid ("we," "us," "our," "Company") governing your use of our blockchain-based boss-fighting gaming platform.</p>
+
+            <h2>2. PLATFORM DESCRIPTION</h2>
+            
+            <h3>2.1 Nature of Service</h3>
+            <p>Alpha Raid is a decentralized gaming platform operating on the Solana blockchain where participants place bets on whether a boss character will be defeated or survive during timed combat phases.</p>
+
+            <h3>2.2 Game Mechanics</h3>
+            <ul>
+                <li><strong>Betting Phase:</strong> Players place bets (0.1 SOL minimum) on whether the boss will die or survive</li>
+                <li><strong>Fighting Phase:</strong> The community collectively damages the boss through interactions</li>
+                <li><strong>Outcome:</strong> Winners receive proportional payouts from the total prize pool minus platform fees</li>
+                <li><strong>Boss Health:</strong> Boss starts with predetermined health that decreases through player actions</li>
+                <li><strong>Time Limits:</strong> Each phase has a countdown timer that determines game progression</li>
+            </ul>
+
+            <h3>2.3 Betting Options</h3>
+            <ul>
+                <li><strong>Boss Dies:</strong> Bet that the boss will be defeated (health reaches 0)</li>
+                <li><strong>Boss Survives:</strong> Bet that the boss will retain health when time expires</li>
+            </ul>
+
+            <h2>3. FINANCIAL STRUCTURE AND FEES</h2>
+
+            <h3>3.1 Fee Structure</h3>
+            <ul>
+                <li><strong>Platform Fee:</strong> A percentage of each bet is retained as platform revenue</li>
+                <li><strong>Prize Pool:</strong> The majority of bets contribute to the winner's prize pool</li>
+                <li><strong>Blockchain Fees:</strong> Standard Solana network transaction fees apply to all transactions</li>
+            </ul>
+
+            <h3>3.2 Payment Processing</h3>
+            <p>All transactions are processed through the Solana blockchain using smart contracts. The Platform does not store, hold, or control user funds directly. All financial interactions occur through decentralized smart contracts.</p>
+
+            <h3>3.3 Payouts</h3>
+            <p>Winners must claim their winnings manually after a round ends. Payouts are distributed proportionally based on bet amounts among winning bettors. The Platform is not responsible for unclaimed winnings after a reasonable period.</p>
+
+            <h2>4. ELIGIBILITY AND ACCOUNT REQUIREMENTS</h2>
+
+            <h3>4.1 Age Requirement</h3>
+            <p>You must be at least 18 years old or the legal age of majority in your jurisdiction to use the Platform.</p>
+
+            <h3>4.2 Legal Compliance</h3>
+            <p>You represent and warrant that:</p>
+            <ul>
+                <li>Your use of the Platform complies with all applicable laws and regulations</li>
+                <li>You are not located in a jurisdiction where online gaming or cryptocurrency transactions are prohibited</li>
+                <li>You have the legal capacity to enter into this agreement</li>
+                <li>You are not on any sanctions list or prohibited from using financial services</li>
+            </ul>
+
+            <h3>4.3 Wallet Requirements</h3>
+            <ul>
+                <li>You must connect a compatible Solana wallet (Phantom recommended) to participate</li>
+                <li>You are solely responsible for the security of your wallet and private keys</li>
+                <li>The Platform cannot recover lost or stolen wallet credentials</li>
+                <li>You must ensure your wallet has sufficient SOL for bets and transaction fees</li>
+            </ul>
+
+            <h2>5. PROHIBITED CONDUCT</h2>
+            <p>Users are strictly prohibited from:</p>
+            <ul>
+                <li>Using automated scripts, bots, or other artificial means to participate</li>
+                <li>Attempting to manipulate game outcomes through technical exploitation</li>
+                <li>Engaging in money laundering or other illegal financial activities</li>
+                <li>Interfering with the Platform's operation or other users' experience</li>
+                <li>Reverse engineering, decompiling, or attempting to extract source code</li>
+                <li>Coordinating with other players to manipulate betting outcomes</li>
+                <li>Creating multiple accounts to circumvent betting limits</li>
+                <li>Exploiting bugs or vulnerabilities for personal gain</li>
+            </ul>
+
+            <h2>6. RISKS AND DISCLAIMERS</h2>
+
+            <div class="warning-box">
+                <strong>⚠️ CRITICAL FINANCIAL RISK WARNING</strong>
+                <p>Participation in Alpha Raid involves significant financial risk. You may lose all funds used for betting. This is not a guaranteed investment or money-making opportunity.</p>
+            </div>
+
+            <h3>6.1 Financial Risks</h3>
+            <ul>
+                <li><strong>Loss of Funds:</strong> There is no guarantee of winning or recovering bet amounts</li>
+                <li><strong>Unpredictable Outcomes:</strong> Game results depend on community participation and randomness</li>
+                <li><strong>Blockchain Risks:</strong> Technical issues, network congestion, or smart contract failures may affect transactions</li>
+                <li><strong>Cryptocurrency Volatility:</strong> Solana (SOL) value fluctuations affect the real-world value of bets and winnings</li>
+                <li><strong>Irreversible Transactions:</strong> Blockchain transactions cannot be reversed once confirmed</li>
+            </ul>
+
+            <h3>6.2 Technology Risks</h3>
+            <ul>
+                <li>Smart contract vulnerabilities or bugs may impact platform functionality</li>
+                <li>Blockchain network issues may cause transaction delays or failures</li>
+                <li>Platform availability is not guaranteed and may be interrupted</li>
+                <li>Server outages or maintenance may temporarily suspend gameplay</li>
+                <li>Wallet provider issues may prevent access to funds</li>
+            </ul>
+
+            <h3>6.3 Regulatory Risks</h3>
+            <p>Gaming and cryptocurrency regulations vary by jurisdiction and may change. Future regulatory actions could affect Platform availability, legality, or functionality in your location.</p>
+
+            <h2>7. DISCLAIMERS OF LIABILITY</h2>
+
+            <h3>7.1 Platform Disclaimer</h3>
+            <div class="info-box">
+                <strong>AS-IS SERVICE</strong>
+                <p>THE PLATFORM IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND. WE DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED.</p>
+            </div>
+
+            <p>This includes but is not limited to warranties of:</p>
+            <ul>
+                <li>MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE</li>
+                <li>UNINTERRUPTED OR ERROR-FREE OPERATION</li>
+                <li>ACCURACY OR COMPLETENESS OF INFORMATION</li>
+                <li>SECURITY OF USER DATA OR TRANSACTIONS</li>
+                <li>AVAILABILITY OF THE PLATFORM AT ALL TIMES</li>
+            </ul>
+
+            <h3>7.2 No Investment Advice</h3>
+            <p>The Platform does not provide investment, financial, or gaming advice. All participation decisions are made at your sole discretion and risk. You should consult with appropriate professionals before engaging in blockchain-based gaming.</p>
+
+            <h3>7.3 Third-Party Services</h3>
+            <p>We are not responsible for third-party services, including wallet providers, blockchain networks, or external websites linked from the Platform. Issues with these services are outside our control.</p>
+
+            <h2>8. LIMITATION OF LIABILITY</h2>
+
+            <h3>8.1 Damage Limitations</h3>
+            <p>TO THE MAXIMUM EXTENT PERMITTED BY LAW, IN NO EVENT SHALL ALPHA RAID, ITS OFFICERS, DIRECTORS, EMPLOYEES, OR AGENTS BE LIABLE FOR:</p>
+            <ul>
+                <li>ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES</li>
+                <li>LOSS OF PROFITS, DATA, USE, OR OTHER INTANGIBLE LOSSES</li>
+                <li>DAMAGES RESULTING FROM PLATFORM UNAVAILABILITY OR TECHNICAL FAILURES</li>
+                <li>LOSSES RELATED TO CRYPTOCURRENCY VALUE FLUCTUATIONS</li>
+                <li>DAMAGES EXCEEDING THE TOTAL AMOUNT YOU HAVE BET ON THE PLATFORM IN THE 12 MONTHS PRECEDING THE CLAIM</li>
+                <li>UNAUTHORIZED ACCESS TO YOUR WALLET OR TRANSACTIONS</li>
+            </ul>
+
+            <h3>8.2 Force Majeure</h3>
+            <p>We are not liable for delays or failures due to circumstances beyond our reasonable control, including blockchain network issues, government actions, natural disasters, or cyber attacks.</p>
+
+            <h2>9. INDEMNIFICATION</h2>
+            <p>You agree to indemnify, defend, and hold harmless Alpha Raid and its affiliates from any claims, damages, losses, or expenses (including reasonable attorney fees) arising from:</p>
+            <ul>
+                <li>Your use of the Platform</li>
+                <li>Your violation of these Terms</li>
+                <li>Your violation of applicable laws or regulations</li>
+                <li>Your infringement of third-party rights</li>
+                <li>Any disputes between you and other users</li>
+            </ul>
+
+            <h2>10. INTELLECTUAL PROPERTY</h2>
+
+            <h3>10.1 Platform Rights</h3>
+            <p>All Platform content, including software, text, graphics, logos, character designs, and trademarks, is owned by Alpha Raid or its licensors and protected by intellectual property laws.</p>
+
+            <h3>10.2 Limited License</h3>
+            <p>You receive a limited, non-exclusive, non-transferable license to use the Platform for personal, non-commercial gaming purposes only. You may not reproduce, distribute, or create derivative works from Platform content.</p>
+
+            <h3>10.3 User Content</h3>
+            <p>Any content you submit (including usernames and feedback) may be used by us for Platform operation and promotion without compensation.</p>
+
+            <h2>11. PRIVACY AND DATA PROTECTION</h2>
+
+            <h3>11.1 Data Collection</h3>
+            <p>We collect minimal personal data necessary for Platform operation, primarily:</p>
+            <ul>
+                <li>Wallet addresses (public blockchain data)</li>
+                <li>Transaction information</li>
+                <li>Game participation statistics</li>
+                <li>Basic usage analytics</li>
+            </ul>
+
+            <h3>11.2 Data Security</h3>
+            <p>While we implement reasonable security measures, we cannot guarantee absolute security of user data or transactions. Blockchain transactions are permanently recorded and publicly visible.</p>
+
+            <h3>11.3 Blockchain Transparency</h3>
+            <p>All game activities and transactions are recorded on the public Solana blockchain and are permanently visible to anyone. This is an inherent characteristic of blockchain technology.</p>
+
+            <h2>12. DISPUTE RESOLUTION</h2>
+
+            <h3>12.1 Governing Law</h3>
+            <p>These Terms are governed by the laws of [Jurisdiction] without regard to conflict of law principles.</p>
+
+            <h3>12.2 Arbitration Agreement</h3>
+            <p>Any disputes arising from these Terms or Platform use shall be resolved through binding arbitration rather than court proceedings, except for claims seeking injunctive relief.</p>
+
+            <h3>12.3 Class Action Waiver</h3>
+            <p>You waive the right to participate in class action lawsuits or class-wide arbitrations against Alpha Raid. All disputes must be brought individually.</p>
+
+            <h2>13. PLATFORM MODIFICATIONS AND TERMINATION</h2>
+
+            <h3>13.1 Platform Changes</h3>
+            <p>We reserve the right to modify, suspend, or discontinue the Platform or any features at any time without prior notice. This includes:</p>
+            <ul>
+                <li>Game mechanics and rules</li>
+                <li>Fee structures</li>
+                <li>Betting limits and options</li>
+                <li>Boss characteristics and abilities</li>
+            </ul>
+
+            <h3>13.2 Terms Updates</h3>
+            <p>These Terms may be updated periodically. The "Last Updated" date will reflect changes. Continued use after changes constitutes acceptance of modified Terms. Major changes will be communicated through the Platform.</p>
+
+            <h3>13.3 Account Termination</h3>
+            <p>We may terminate or suspend user access immediately for Terms violations, suspicious activity, or other reasonable causes, with or without notice.</p>
+
+            <h2>14. ANTI-MONEY LAUNDERING AND COMPLIANCE</h2>
+
+            <h3>14.1 AML Compliance</h3>
+            <p>Users must comply with all applicable anti-money laundering (AML) and counter-terrorism financing (CTF) laws in their jurisdiction.</p>
+
+            <h3>14.2 Suspicious Activity</h3>
+            <p>We reserve the right to investigate and report suspicious activities to relevant authorities. This may include freezing accounts or withholding payouts pending investigation.</p>
+
+            <h3>14.3 Prohibited Jurisdictions</h3>
+            <p>Use is prohibited by individuals or entities:</p>
+            <ul>
+                <li>On sanctions lists (OFAC, UN, EU, etc.)</li>
+                <li>In jurisdictions where online gaming or cryptocurrency use is illegal</li>
+                <li>In countries with comprehensive trade embargoes</li>
+            </ul>
+
+            <h2>15. GAME INTEGRITY</h2>
+
+            <h3>15.1 Fair Play</h3>
+            <p>We strive to maintain fair gameplay but cannot guarantee outcomes. Game results depend on community participation, blockchain confirmations, and smart contract execution.</p>
+
+            <h3>15.2 Technical Issues</h3>
+            <p>In case of technical malfunctions affecting game integrity, we reserve the right to void affected rounds and refund participants at our discretion.</p>
+
+            <h3>15.3 Dispute Resolution for Games</h3>
+            <p>Game outcome disputes will be reviewed based on blockchain records. Our decision on game-related disputes is final and binding.</p>
+
+            <h2>16. ADDITIONAL PROVISIONS</h2>
+
+            <h3>16.1 Severability</h3>
+            <p>If any provision of these Terms is deemed invalid or unenforceable, the remaining provisions continue in full effect.</p>
+
+            <h3>16.2 Entire Agreement</h3>
+            <p>These Terms constitute the complete agreement between parties regarding Platform use and supersede all prior agreements.</p>
+
+            <h3>16.3 No Waiver</h3>
+            <p>Failure to enforce any provision does not constitute a waiver of that provision or our right to enforce it later.</p>
+
+            <h3>16.4 Assignment</h3>
+            <p>These Terms may be assigned by Alpha Raid to affiliated entities but not by users without written consent.</p>
+
+            <h3>16.5 Contact Information</h3>
+            <p>For questions about these Terms or the Platform, contact us at: [Contact Email/Support]</p>
+
+            <div class="acceptance-section">
+                <p><strong>By using Alpha Raid, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.</strong></p>
+                <p>You further acknowledge that participation in blockchain-based gaming involves substantial risk and that you may lose all funds used for participation.</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
