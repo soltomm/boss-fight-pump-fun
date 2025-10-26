@@ -74,6 +74,9 @@ const FIGHT_DURATION = 60;   // seconds
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'aaa';
 const ADMIN_WALLET = process.env.ADMIN_WALLET;
 
+let fightEndingInProgress = false;
+let fightEndCalled = false;
+
 const { PumpChatClient } = require('pump-chat-client');
 
 if (!fs.existsSync(EXPORT_DIR)) fs.mkdirSync(EXPORT_DIR, { recursive: true });
@@ -576,6 +579,8 @@ async function startBettingPhase() {
   
   try {
     resetGame();
+    fightEndingInProgress = false;
+    fightEndCalled = false;
     currentRoundId = Date.now();
     
     const [bettingRoundPDAResult] = getBettingRoundPDA(currentRoundId);
@@ -912,9 +917,15 @@ async function processPayouts() {
 }
 
 async function endFight() {
+  if (fightEndingInProgress || fightEndCalled) {
+    console.log(`Fight end already in progress or completed. Skipping duplicate call (reason: ${reason})`);
+    return;
+  }
   if (gamePhase !== GAME_PHASES.FIGHTING) return;
   
   try {
+      fightEndingInProgress = true;
+      fightEndCalled = true;
     clearTimeout(gameTimer);
     
     const bossDefeated = bossHP === 0;
@@ -958,6 +969,8 @@ async function endFight() {
     }).catch(err => console.error('Error exporting results:', err));
   } catch (error) {
     console.error('Error ending fight:', error);
+  }finally {
+    fightEndingInProgress = false;
   }
 }
 
@@ -976,6 +989,9 @@ function resetGame() {
   fightEndTime = null;
   bettingRoundPDA = null;
   escrowPDA = null;
+
+  fightEndingInProgress = false;
+  fightEndCalled = false;
   
   if (gameTimer) {
     clearTimeout(gameTimer);
@@ -1072,7 +1088,7 @@ async function handleChatMessage(username, message, timestamp = Date.now()) {
       }
       
       // The server is the authority; call the function that handles on-chain state change and payouts.
-      endFight(); 
+      await endFight(); 
   }
 }
 
