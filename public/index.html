@@ -491,6 +491,33 @@
             box-shadow: 0 8px 35px rgba(0, 240, 255, 0.8);
         }
 
+        .tos-button {
+            display: block;
+            width: 100%;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            color: #0a0e27;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1.1rem;
+            font-family: 'Orbitron', sans-serif;
+            text-decoration: none;
+            text-align: center;
+            transition: all 0.4s ease;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            box-shadow: 0 5px 25px rgba(255, 215, 0, 0.5);
+            letter-spacing: 1px;
+        }
+
+        .tos-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 35px rgba(255, 215, 0, 0.8);
+            background: linear-gradient(135deg, #ffaa00, #ffd700);
+        }
+
         .wallet-connected {
             background: linear-gradient(135deg, #00f0ff, #2ed573);
         }
@@ -905,6 +932,9 @@
         <div class="right-panel">
             <button class="connect-wallet" id="connectWallet">CONNECT PHANTOM</button>
             <div class="wallet-address" id="walletAddress" style="display: none;"></div>
+            <a href="terms.html" class="tos-button" target="_blank">
+                📜 TERMS OF SERVICE
+            </a>
             <div class="card leaderboard">
                 <h3>🏆 TOP DAMAGE DEALERS</h3>
                 <div id="topPlayers"></div>
@@ -1302,7 +1332,7 @@
             startBetting: document.getElementById('startBetting'),
             resetGame: document.getElementById('resetGame'),
             adminKey: document.getElementById('adminKey'),
-            adminError: document.getElementById('adminError')
+            adminError: document.getElementById('adminError'),
         };
         
         // Utility functions
