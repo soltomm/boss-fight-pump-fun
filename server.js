@@ -924,14 +924,19 @@ async function endFight() {
     
     if (program) {
       console.log('Ending fight on blockchain');
-      
-      const tx = await program.methods
-        .endFight(new BN(bossHP))
-        .accounts({
-          bettingRound: bettingRoundPDA,
-          authority: authorityKeypair.publicKey,
-        })
-        .rpc();
+      // 🔑 CRITICAL FIX: Explicitly check the BN value being sent
+    const finalHP_BN = new BN(bossHP); 
+    
+    // 🔑 ADD THIS LOG TO VERIFY THE EXACT DATA SENT TO SOLANA
+    console.log(`[RPC PAYLOAD CHECK] Sending final_hp: ${bossHP} (BN value: ${finalHP_BN.toString()})`);
+    
+    const tx = await program.methods
+      .endFight(finalHP_BN) // Use the guaranteed-correct BN object
+      .accounts({
+        bettingRound: bettingRoundPDA,
+        authority: authorityKeypair.publicKey,
+      })
+      .rpc();
       
       console.log('Fight ended on blockchain:', tx);
       await processPayouts();

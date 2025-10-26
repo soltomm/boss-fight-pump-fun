@@ -1454,9 +1454,6 @@
                     if (typeof audioSystem !== 'undefined') {
                         audioSystem.stopBackgroundMusic();
                         audioSystem.playBossDefeated();
-                        // Note: The previous code had a success chime here, 
-                        // but if your server sends a 'fight_ended' event, 
-                        // you might want to move this or rely on that event.
                     }
                 }, 300);
             }
