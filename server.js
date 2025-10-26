@@ -866,7 +866,6 @@ async function processPayouts() {
                 betAccount: pubkey,
                 escrow: escrowPDA,
                 bettor: bettor,
-                authority: authorityKeypair.publicKey,
                 systemProgram: SystemProgram.programId,
               })
               .rpc();
