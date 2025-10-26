@@ -1443,23 +1443,23 @@
             }
             
             // Check if boss was just defeated (HP reached 0)
-            // if (data.bossHP <= 0 && gameState.bossHP > 0 && gameState.gamePhase === 'fighting') {
-            //     socket.emit('end_fight', { reason: 'defeated' });
+            if (data.bossHP <= 0 && gameState.bossHP > 0 && gameState.gamePhase === 'fighting') {
+                socket.emit('end_fight', { reason: 'defeated' });
 
-            //     setTimeout(() => {
-            //         el.bossImage.classList.add('defeated');
-            //         createConfetti();
-            //         showPhaseTransition('💀 BOSS DEFEATED! 💀', 3000);
+                setTimeout(() => {
+                    el.bossImage.classList.add('defeated');
+                    createConfetti();
+                    showPhaseTransition('💀 BOSS DEFEATED! 💀', 3000);
                     
-            //         if (typeof audioSystem !== 'undefined') {
-            //             audioSystem.stopBackgroundMusic();
-            //             audioSystem.playBossDefeated();
-            //             // Note: The previous code had a success chime here, 
-            //             // but if your server sends a 'fight_ended' event, 
-            //             // you might want to move this or rely on that event.
-            //         }
-            //     }, 300);
-            // }
+                    if (typeof audioSystem !== 'undefined') {
+                        audioSystem.stopBackgroundMusic();
+                        audioSystem.playBossDefeated();
+                        // Note: The previous code had a success chime here, 
+                        // but if your server sends a 'fight_ended' event, 
+                        // you might want to move this or rely on that event.
+                    }
+                }, 300);
+            }
             
             gameState = { ...gameState, ...data };
             updateDisplay();

@@ -994,6 +994,12 @@ function resetGame() {
 async function handleChatMessage(username, message, timestamp = Date.now()) {
   if (gamePhase !== GAME_PHASES.FIGHTING) return;
 
+  // 🛑 Safety check: If boss is already dead, stop processing new damage/heals
+  if (bossHP <= 0) {
+      console.log(`Boss is already defeated. Ignoring message from ${username}.`);
+      return;
+  }
+
   const text = (message || '').toUpperCase();
   let delta = 0;
   
@@ -1049,6 +1055,20 @@ async function handleChatMessage(username, message, timestamp = Date.now()) {
     latest: chronological[chronological.length - 1],
     timeRemaining: Math.max(0, fightEndTime - Date.now())
   });
+
+  // 🚀 CRITICAL NEW LOGIC: Check for instant defeat 🚀
+  if (bossHP === 0) {
+      console.log("BOSS DEFEATED! Triggering immediate fight end sequence.");
+      
+      // Clear the timeout to prevent a delayed endFight call when the timer expires
+      if (gameTimer) {
+          clearTimeout(gameTimer);
+          gameTimer = null; // Important to null it out
+      }
+      
+      // The server is the authority; call the function that handles on-chain state change and payouts.
+      endFight(); 
+  }
 }
 
 function getTop(n = 3) {
