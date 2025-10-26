@@ -155,7 +155,7 @@
       "args": [
         {
           "name": "final_hp",
-          "type": "u32"
+          "type": "u64"
         }
       ]
     },
