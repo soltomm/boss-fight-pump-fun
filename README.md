@@ -1,4 +1,4 @@
-# Solana Boss Fight Betting
+# Solana Boss Fight
 
 A real-time boss fight game with Solana-based betting integration. Players can bet on whether the boss will die or survive, then participate in a timed boss fight through pump.fun chat messages.
 

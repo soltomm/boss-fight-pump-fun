@@ -1,17 +1,3 @@
-/**
- * server.js - TOKEN VERSION with SPL token support
- *
- * Node.js server that:
- * - connects to pump.fun chat websocket
- * - integrates with Solana smart contract for betting using SPL TOKENS
- * - manages game phases and blockchain interactions
- * - runs timed boss fights (1 minute duration)
- * - serves a lightweight overlay page (overlay.html)
- * - broadcasts updates to overlay clients via socket.io
- * - exports JSON + CSV at end of fight
- * - HP is tracked client-side and only sent to blockchain at fight end
- */
-
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
