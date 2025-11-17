@@ -497,9 +497,6 @@ io.on('connection', (socket) => {
   });
   
   socket.on('admin:start_betting', (data) => {
-    console.log(data)
-    console.log(ADMIN_SECRET)
-    console.log(ADMIN_WALLET)
     if (data && data.adminKey === ADMIN_SECRET && data.walletAddress == ADMIN_WALLET) {
       startBettingPhase();
     } else {
@@ -632,6 +629,7 @@ async function startBettingPhase() {
   
   try {
     resetGame();
+    console.log('Starting betting phase...');
     fightEndingInProgress = false;
     fightEndCalled = false;
     currentRoundId = Date.now();
@@ -1079,7 +1077,6 @@ function resetGame() {
   }
   
   console.log(`Game reset! Boss HP: ${bossHP}/${INITIAL_HP}`);
-  //autoStartGameLoop();
   
   io.emit('game_reset', {
     gamePhase,
