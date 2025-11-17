@@ -27,7 +27,7 @@
           "name": "betting_round"
         },
         {
-          "name": "escrow",
+          "name": "escrow_token_account",
           "writable": true,
           "pda": {
             "seeds": [
@@ -51,8 +51,11 @@
           }
         },
         {
-          "name": "treasury",
+          "name": "treasury_token_account",
           "writable": true
+        },
+        {
+          "name": "treasury"
         },
         {
           "name": "authority",
@@ -61,6 +64,10 @@
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
         }
       ],
       "args": []
@@ -89,7 +96,7 @@
           "writable": true
         },
         {
-          "name": "escrow",
+          "name": "escrow_token_account",
           "writable": true,
           "pda": {
             "seeds": [
@@ -113,6 +120,10 @@
           }
         },
         {
+          "name": "bettor_token_account",
+          "writable": true
+        },
+        {
           "name": "bettor",
           "writable": true
         },
@@ -123,6 +134,10 @@
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
         }
       ],
       "args": []
@@ -206,7 +221,7 @@
           }
         },
         {
-          "name": "escrow",
+          "name": "escrow_token_account",
           "writable": true,
           "pda": {
             "seeds": [
@@ -229,6 +244,9 @@
           }
         },
         {
+          "name": "token_mint"
+        },
+        {
           "name": "authority",
           "writable": true,
           "signer": true
@@ -239,6 +257,14 @@
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        },
+        {
+          "name": "rent",
+          "address": "SysvarRent111111111111111111111111111111111"
         }
       ],
       "args": [
@@ -310,7 +336,7 @@
           }
         },
         {
-          "name": "escrow",
+          "name": "escrow_token_account",
           "writable": true,
           "pda": {
             "seeds": [
@@ -334,6 +360,10 @@
           }
         },
         {
+          "name": "bettor_token_account",
+          "writable": true
+        },
+        {
           "name": "bettor",
           "writable": true,
           "signer": true
@@ -341,6 +371,10 @@
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "token_program",
+          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
         }
       ],
       "args": [
@@ -618,6 +652,16 @@
       "code": 6014,
       "name": "ArithmeticOverflow",
       "msg": "Arithmetic overflow"
+    },
+    {
+      "code": 6015,
+      "name": "InvalidTokenMint",
+      "msg": "Invalid token mint"
+    },
+    {
+      "code": 6016,
+      "name": "InvalidTokenAccount",
+      "msg": "Invalid token account"
     }
   ],
   "types": [
@@ -711,6 +755,10 @@
             "type": "pubkey"
           },
           {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
             "name": "betting_start_time",
             "type": "i64"
           },
@@ -785,6 +833,10 @@
           {
             "name": "fight_end_time",
             "type": "i64"
+          },
+          {
+            "name": "token_mint",
+            "type": "pubkey"
           }
         ]
       }

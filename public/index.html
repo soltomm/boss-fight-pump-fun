@@ -909,18 +909,18 @@
                     <div class="betting-pools">
                         <div class="betting-pool death">
                             <div class="pool-title">💀 BOSS DIES</div>
-                            <div class="pool-amount" id="deathPool">0 SOL</div>
+                            <div class="pool-amount" id="deathPool">0 $RAIDIT</div>
                         </div>
                         <div class="betting-pool survival">
                             <div class="pool-title">🛡️ BOSS SURVIVES</div>
-                            <div class="pool-amount" id="survivalPool">0 SOL</div>
+                            <div class="pool-amount" id="survivalPool">0 $RAIDIT</div>
                         </div>
                     </div>
                     
                     <div class="bet-form" id="betForm">
                         <div class="bet-buttons">
-                            <button class="bet-btn death" id="betDeath">BET 0.1 SOL - DEATH</button>
-                            <button class="bet-btn survival" id="betSurvival">BET 0.1 SOL - SURVIVAL</button>
+                            <button class="bet-btn death" id="betDeath">BET 1000 $RAIDIT - DEATH</button>
+                            <button class="bet-btn survival" id="betSurvival">BET 1000 $RAIDIT - SURVIVAL</button>
                         </div>
                     </div>
                     
@@ -1418,8 +1418,8 @@
                 el.bettingSection.style.display = 'none';
             }
             
-            el.deathPool.textContent = `${(gameState.totalDeathBets || 0).toFixed(2)} SOL`;
-            el.survivalPool.textContent = `${(gameState.totalSurvivalBets || 0).toFixed(2)} SOL`;
+            el.deathPool.textContent = `${(gameState.totalDeathBets || 0).toFixed(2)} $RAIDIT`;
+            el.survivalPool.textContent = `${(gameState.totalSurvivalBets || 0).toFixed(2)} $RAIDIT`;
             
             el.lastHitter.textContent = gameState.lastHitter || 'None';
             el.totalHits.textContent = gameState.totalHits || '0';
@@ -1790,7 +1790,7 @@ console.log('Phantom provider:', getPhantomProvider());
         async function placeBet(prediction) {
             // Generate username from wallet address
             const username = wallet.address ? `${wallet.address.substring(0, 4)}...${wallet.address.substring(wallet.address.length - 4)}` : 'Anonymous';
-            const amount = 0.1;
+            const amount = 1000;
             
             if (!wallet.connected) { 
                 showMessage('⚠️ Connect wallet first'); 
@@ -1861,7 +1861,7 @@ console.log('Phantom provider:', getPhantomProvider());
                 
                 userBet = { roundId: gameState.currentRoundId, amount, prediction, username, signature };
                 el.betForm.classList.remove('active');
-                showMessage(`✅ Bet placed successfully! 0.1 SOL on ${prediction}`);
+                showMessage(`✅ Bet placed successfully! 1000 $RAIDIT on ${prediction}`);
                 
                 // Notify server
                 await fetch('/api/bet-notification', {
