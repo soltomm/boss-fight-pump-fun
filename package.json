@@ -20,6 +20,7 @@
     "pump-chat-client": "*",
     "socket.io": "*",
     "socket.io-client": "^4.8.1",
-    "ws": "^8.18.3"
+    "ws": "^8.18.3",
+    "@solana/spl-token": "^0.3.8"
   }
 }
