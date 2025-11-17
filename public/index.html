@@ -919,8 +919,8 @@
                     
                     <div class="bet-form" id="betForm">
                         <div class="bet-buttons">
-                            <button class="bet-btn death" id="betDeath">BET 1000 $RAIDIT - DEATH</button>
-                            <button class="bet-btn survival" id="betSurvival">BET 1000 $RAIDIT - SURVIVAL</button>
+                            <button class="bet-btn death" id="betDeath">BET 300000 $RAIDIT - DEATH</button>
+                            <button class="bet-btn survival" id="betSurvival">BET 300000 $RAIDIT - SURVIVAL</button>
                         </div>
                     </div>
                     
@@ -1790,7 +1790,7 @@ console.log('Phantom provider:', getPhantomProvider());
         async function placeBet(prediction) {
             // Generate username from wallet address
             const username = wallet.address ? `${wallet.address.substring(0, 4)}...${wallet.address.substring(wallet.address.length - 4)}` : 'Anonymous';
-            const amount = 1000;
+            const amount = 300000;
             
             if (!wallet.connected) { 
                 showMessage('⚠️ Connect wallet first'); 
@@ -1861,7 +1861,7 @@ console.log('Phantom provider:', getPhantomProvider());
                 
                 userBet = { roundId: gameState.currentRoundId, amount, prediction, username, signature };
                 el.betForm.classList.remove('active');
-                showMessage(`✅ Bet placed successfully! 1000 $RAIDIT on ${prediction}`);
+                showMessage(`✅ Bet placed successfully! 300000 $RAIDIT on ${prediction}`);
                 
                 // Notify server
                 await fetch('/api/bet-notification', {
