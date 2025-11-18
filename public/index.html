@@ -207,6 +207,52 @@
             text-shadow: 0 0 30px #ffd700;
         }
 
+        .waiting-container {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.waiting-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ffd700;
+    text-shadow: 0 0 30px #ffd700;
+    margin-bottom: 20px;
+    animation: waitingPulse 2s ease-in-out infinite;
+}
+
+.waiting-countdown {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 4rem;
+    font-weight: 900;
+    color: #00f0ff;
+    text-shadow: 0 0 40px #00f0ff;
+    margin: 30px 0;
+    animation: countdownScale 1s ease-in-out infinite;
+}
+
+.waiting-message {
+    font-size: 1.2rem;
+    color: #a4b0be;
+    margin-top: 20px;
+}
+
+@keyframes waitingPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+@keyframes countdownScale {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.phase-waiting {
+    color: #ffd700;
+    text-shadow: 0 0 30px #ffd700;
+}
+
         .phase-fighting { 
             color: #ff0080;
             text-shadow: 0 0 30px #ff0080;
@@ -1983,6 +2029,73 @@ console.log('Phantom provider:', getPhantomProvider());
         
         // Enhance socket event handlers with audio
         const originalPhaseChangeHandler = socket._callbacks['$phase_change'] || [];
+
+        // Waiting phase handler
+socket.on('waiting_phase', (data) => {
+    console.log('Waiting phase started:', data);
+    gameState.phase = 'waiting';
+    gameState.roundId = data.currentRoundId;
+    
+    // Update phase display
+    el.gamePhase.textContent = 'WAITING';
+    el.gamePhase.className = 'game-phase phase-waiting';
+    
+    // Show waiting countdown in timer area
+    updateWaitingUI(data.timeRemaining);
+    
+    // Show notification
+    showNotification(data.message, 'info');
+    
+    // Play audio
+    audioSystem.playPhaseTransition();
+});
+
+// Waiting timer update handler
+socket.on('waiting_timer_update', (data) => {
+    if (gameState.phase === 'waiting') {
+        updateWaitingUI(data.timeRemaining);
+    }
+});
+
+// Function to update waiting UI
+function updateWaitingUI(timeRemaining) {
+    const minutes = Math.floor(timeRemaining / 60000);
+    const seconds = Math.floor((timeRemaining % 60000) / 1000);
+    
+    // Update timer display with countdown
+    el.timer.innerHTML = `
+        <div class="waiting-container">
+            <div class="waiting-title">NEXT ROUND STARTING IN</div>
+            <div class="waiting-countdown">${minutes}:${seconds.toString().padStart(2, '0')}</div>
+            <div class="waiting-message">Get ready to place your bets!</div>
+        </div>
+    `;
+    
+    // Play tick sound in last 10 seconds
+    if (timeRemaining <= 10000 && timeRemaining > 9000) {
+        const currentSecond = Math.floor(timeRemaining / 1000);
+        if (window.lastWaitingTick !== currentSecond) {
+            audioSystem.playCountdownTick();
+            window.lastWaitingTick = currentSecond;
+        }
+    }
+    
+    // Change color in last minute
+    if (timeRemaining <= 60000) {
+        el.timer.querySelector('.waiting-countdown').style.color = '#ff0080';
+        el.timer.querySelector('.waiting-countdown').style.textShadow = '0 0 40px #ff0080';
+    }
+}
+
+// Enhance phase change to handle waiting -> betting transition
+socket.on('phase_change', (data) => {
+    // If transitioning from waiting to betting, show special notification
+    if (gameState.phase === 'waiting' && data.gamePhase === 'betting') {
+        showNotification('🎰 Betting is now open! Place your bets!', 'success');
+        audioSystem.playSuccessChime();
+        setTimeout(() => audioSystem.playBossRoar(), 500);
+    }
+});
         socket.on('phase_change', (data) => {
             if (data.gamePhase === 'betting') {
                 audioSystem.stopBackgroundMusic();

@@ -153,6 +153,7 @@ const program = new Program(idl, provider);
 // Game phases
 const GAME_PHASES = {
   IDLE: 'idle',
+  WAITING: 'waiting',
   BETTING: 'betting',
   FIGHTING: 'fighting',
   ENDED: 'ended'
@@ -171,6 +172,9 @@ let pumpSocket = null;
 let reconnectAttempts = 0;
 const maxReconnectAttempts = 10;
 const reconnectInterval = 5000;
+const WAITING_DURATION = process.env.WAITING_DURATION ||5 * 60; // 5 minutes in seconds
+let waitingEndTime = null;
+let waitingTimer = null;
 
 // Game timing
 let bettingEndTime = null;
@@ -629,65 +633,102 @@ async function startBettingPhase() {
   
   try {
     resetGame();
-    console.log('Starting betting phase...');
+    console.log('Starting 5-minute waiting period before betting...');
     fightEndingInProgress = false;
     fightEndCalled = false;
     currentRoundId = Date.now();
     
-    const [bettingRoundPDAResult] = getBettingRoundPDA(currentRoundId);
-    const [escrowTokenAccountPDAResult] = getEscrowTokenAccountPDA(currentRoundId); // NEW
-    bettingRoundPDA = bettingRoundPDAResult;
-    escrowTokenAccountPDA = escrowTokenAccountPDAResult; // NEW
+    // Set waiting phase
+    gamePhase = GAME_PHASES.WAITING;
+    waitingEndTime = Date.now() + (WAITING_DURATION * 1000);
     
-    if (program) {
-      console.log('Initializing betting round on blockchain...');
-      
-      const tx = await program.methods
-        .initializeBettingRound(
-          new BN(currentRoundId),
-          new BN(BETTING_DURATION),
-          new BN(FIGHT_DURATION),
-          INITIAL_HP,
-          FEE_PERCENTAGE
-        )
-        .accounts({
-          bettingRound: bettingRoundPDA,
-          escrowTokenAccount: escrowTokenAccountPDA, // NEW: Token escrow
-          tokenMint: tokenMint, // NEW
-          authority: authorityKeypair.publicKey,
-          treasury: treasuryPubkey,
-          systemProgram: SystemProgram.programId,
-          tokenProgram: TOKEN_PROGRAM_ID, // NEW
-          rent: web3.SYSVAR_RENT_PUBKEY, // NEW
-        })
-        .signers([authorityKeypair])
-        .rpc();
-      
-      console.log('Betting round initialized on blockchain:', tx);
-    }
-    
-    gamePhase = GAME_PHASES.BETTING;
-    bettingEndTime = Date.now() + (BETTING_DURATION * 1000);
-    
-    console.log('Betting phase started! Users have 1 minute to place bets.');
-    
-    io.emit('phase_change', {
-      gamePhase,
+    // Emit waiting phase to clients
+    io.emit('waiting_phase', {
+      gamePhase: 'waiting',
       currentRoundId,
-      timeRemaining: BETTING_DURATION * 1000,
-      message: 'Betting phase started! Place your bets on boss death or survival!',
-      bettingRoundPDA: bettingRoundPDA.toString(),
-      escrowTokenAccountPDA: escrowTokenAccountPDA.toString(), // NEW
-      tokenMint: TOKEN_MINT_STR, // NEW
-      tokenDecimals // NEW
+      timeRemaining: WAITING_DURATION * 1000,
+      message: 'Preparing for the next round! Betting will start in 5 minutes.',
     });
     
-    gameTimer = setTimeout(() => {
-      startFightingPhase();
-    }, BETTING_DURATION * 1000);
+    // Start countdown timer that emits every second
+    const waitingInterval = setInterval(() => {
+      const remaining = waitingEndTime - Date.now();
+      
+      if (remaining <= 0) {
+        clearInterval(waitingInterval);
+        return;
+      }
+      
+      io.emit('waiting_timer_update', {
+        timeRemaining: remaining,
+        phase: 'waiting'
+      });
+    }, 1000);
+    
+    // After 5 minutes, initialize betting round
+    waitingTimer = setTimeout(async () => {
+      console.log('Waiting period ended. Initializing betting round on blockchain...');
+      
+      try {
+        const [bettingRoundPDAResult] = getBettingRoundPDA(currentRoundId);
+        const [escrowTokenAccountPDAResult] = getEscrowTokenAccountPDA(currentRoundId);
+        bettingRoundPDA = bettingRoundPDAResult;
+        escrowTokenAccountPDA = escrowTokenAccountPDAResult;
+        
+        if (program) {
+          const tx = await program.methods
+            .initializeBettingRound(
+              new BN(currentRoundId),
+              new BN(BETTING_DURATION),
+              new BN(FIGHT_DURATION),
+              INITIAL_HP,
+              FEE_PERCENTAGE
+            )
+            .accounts({
+              bettingRound: bettingRoundPDA,
+              escrowTokenAccount: escrowTokenAccountPDA,
+              tokenMint: tokenMint,
+              authority: authorityKeypair.publicKey,
+              treasury: treasuryPubkey,
+              systemProgram: SystemProgram.programId,
+              tokenProgram: TOKEN_PROGRAM_ID,
+              rent: web3.SYSVAR_RENT_PUBKEY,
+            })
+            .signers([authorityKeypair])
+            .rpc();
+          
+          console.log('Betting round initialized on blockchain:', tx);
+        }
+        
+        gamePhase = GAME_PHASES.BETTING;
+        bettingEndTime = Date.now() + (BETTING_DURATION * 1000);
+        
+        console.log('Betting phase started! Users have time to place bets.');
+        
+        io.emit('phase_change', {
+          gamePhase,
+          currentRoundId,
+          timeRemaining: BETTING_DURATION * 1000,
+          message: 'Betting phase started! Place your bets on boss death or survival!',
+          bettingRoundPDA: bettingRoundPDA.toString(),
+          escrowTokenAccountPDA: escrowTokenAccountPDA.toString(),
+          tokenMint: TOKEN_MINT_STR,
+          tokenDecimals
+        });
+        
+        gameTimer = setTimeout(() => {
+          startFightingPhase();
+        }, BETTING_DURATION * 1000);
+        
+      } catch (error) {
+        console.error('Error initializing betting round after waiting:', error);
+        gamePhase = GAME_PHASES.IDLE;
+        io.emit('error', { message: 'Failed to start betting phase after waiting period' });
+      }
+    }, WAITING_DURATION * 1000);
     
   } catch (error) {
-    console.error('Error starting betting phase:', error);
+    console.error('Error starting waiting phase:', error);
     gamePhase = GAME_PHASES.IDLE;
   }
 }
