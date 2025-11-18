@@ -64,7 +64,7 @@ const SOLANA_RPC_URL = process.env.SOLANA_RPC_URL || 'https://devnet.helius-rpc.
 const TREASURY_WALLET = process.env.TREASURY_WALLET;
 const PROGRAM_ID_STR = process.env.PROGRAM_ID || 'FtQbMDA7w8a9icfbMkuTxxQ695Wp9e6RQFSGVjmYQgz3';
 const TOKEN_MINT_STR = COIN_ADDRESS
-const FEE_PERCENTAGE = process.env.FEE_PERCENTAGE ? Number(process.env.FEE_PERCENTAGE) : 5;
+const FEE_PERCENTAGE = process.env.FEE_PERCENTAGE ? Number(process.env.FEE_PERCENTAGE) : 0;
 const BETTING_DURATION = 60;
 const FIGHT_DURATION = 60;
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'aaa';
@@ -1181,9 +1181,23 @@ async function exportResults(results) {
   const t = new Date();
   const baseName = `bossfight_${COIN_ADDRESS}_${currentRoundId}_${t.getTime()}`;
   
+  // Log the full JSON results
+  console.log('=== EXPORT RESULTS ===');
+  console.log(JSON.stringify(results, null, 2));
+  console.log('======================');
+  
   const jsonPath = path.join(EXPORT_DIR, `${baseName}.json`);
   fs.writeFileSync(jsonPath, JSON.stringify(results, null, 2), 'utf8');
   console.log('Results exported to:', jsonPath);
+
+  // Log the CSV data in a readable format
+  console.log('=== DAMAGE CSV DATA ===');
+  console.log('Username | Hits');
+  console.log('---------|-----');
+  results.scores.forEach(score => {
+    console.log(`${score.username} | ${score.hits}`);
+  });
+  console.log('=======================');
 
   const csvPath = path.join(EXPORT_DIR, `${baseName}_damage.csv`);
   const csvWriter = createCsvWriter({
