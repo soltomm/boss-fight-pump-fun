@@ -8,74 +8,9 @@
   },
   "instructions": [
     {
-      "name": "claim_fees",
-      "docs": [
-        "Claim fees (called by treasury)"
-      ],
-      "discriminator": [
-        82,
-        251,
-        233,
-        156,
-        12,
-        52,
-        184,
-        202
-      ],
-      "accounts": [
-        {
-          "name": "betting_round"
-        },
-        {
-          "name": "escrow_token_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "betting_round.round_id",
-                "account": "BettingRound"
-              }
-            ]
-          }
-        },
-        {
-          "name": "treasury_token_account",
-          "writable": true
-        },
-        {
-          "name": "treasury"
-        },
-        {
-          "name": "authority",
-          "signer": true
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "token_program",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-        }
-      ],
-      "args": []
-    },
-    {
       "name": "claim_payout",
       "docs": [
-        "Claim payout for winning bet"
+        "Claim equal share of prize pool for winning bet"
       ],
       "discriminator": [
         127,
@@ -128,14 +63,6 @@
           "writable": true
         },
         {
-          "name": "authority",
-          "signer": true
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        },
-        {
           "name": "token_program",
           "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
         }
@@ -177,7 +104,7 @@
     {
       "name": "initialize_betting_round",
       "docs": [
-        "Initialize a new betting round"
+        "Initialize a new betting round with treasury-funded prize pool"
       ],
       "discriminator": [
         237,
@@ -247,12 +174,18 @@
           "name": "token_mint"
         },
         {
+          "name": "treasury_token_account",
+          "writable": true
+        },
+        {
           "name": "authority",
           "writable": true,
           "signer": true
         },
         {
-          "name": "treasury"
+          "name": "treasury",
+          "writable": true,
+          "signer": true
         },
         {
           "name": "system_program",
@@ -285,15 +218,15 @@
           "type": "u32"
         },
         {
-          "name": "fee_percentage",
-          "type": "u8"
+          "name": "prize_pool_amount",
+          "type": "u64"
         }
       ]
     },
     {
       "name": "place_bet",
       "docs": [
-        "Place a bet on boss death or survival"
+        "Place a bet on boss death or survival (NO TOKENS REQUIRED)"
       ],
       "discriminator": [
         222,
@@ -336,34 +269,6 @@
           }
         },
         {
-          "name": "escrow_token_account",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  101,
-                  115,
-                  99,
-                  114,
-                  111,
-                  119
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "betting_round.round_id",
-                "account": "BettingRound"
-              }
-            ]
-          }
-        },
-        {
-          "name": "bettor_token_account",
-          "writable": true
-        },
-        {
           "name": "bettor",
           "writable": true,
           "signer": true
@@ -371,17 +276,9 @@
         {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
-        },
-        {
-          "name": "token_program",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
         }
       ],
       "args": [
-        {
-          "name": "amount",
-          "type": "u64"
-        },
         {
           "name": "prediction",
           "type": {
@@ -399,7 +296,7 @@
     {
       "name": "start_fight_phase",
       "docs": [
-        "Start the fighting phase (called by authority after betting ends)"
+        "Start the fighting phase"
       ],
       "discriminator": [
         23,
@@ -426,7 +323,7 @@
     {
       "name": "update_boss_hp",
       "docs": [
-        "Update boss HP (called by authority during fight)"
+        "Update boss HP"
       ],
       "discriminator": [
         74,
@@ -525,19 +422,6 @@
       ]
     },
     {
-      "name": "FeesClaimed",
-      "discriminator": [
-        22,
-        104,
-        110,
-        222,
-        38,
-        157,
-        14,
-        62
-      ]
-    },
-    {
       "name": "FightEnded",
       "discriminator": [
         241,
@@ -590,78 +474,78 @@
     },
     {
       "code": 6002,
-      "name": "BetTooSmall",
-      "msg": "Bet amount too small"
-    },
-    {
-      "code": 6003,
       "name": "UsernameTooLong",
       "msg": "Username too long"
     },
     {
-      "code": 6004,
+      "code": 6003,
       "name": "NotInFightPhase",
       "msg": "Not in fight phase"
     },
     {
-      "code": 6005,
+      "code": 6004,
       "name": "BettingStillActive",
       "msg": "Betting is still active"
     },
     {
-      "code": 6006,
+      "code": 6005,
       "name": "FightPeriodExpired",
       "msg": "Fight period has expired"
     },
     {
-      "code": 6007,
+      "code": 6006,
       "name": "FightNotFinished",
       "msg": "Fight has not finished"
     },
     {
-      "code": 6008,
+      "code": 6007,
       "name": "FightNotEnded",
       "msg": "Fight has not ended"
     },
     {
-      "code": 6009,
+      "code": 6008,
       "name": "PayoutAlreadyClaimed",
       "msg": "Payout already claimed"
     },
     {
-      "code": 6010,
+      "code": 6009,
       "name": "BetLost",
       "msg": "Bet lost, no payout available"
     },
     {
-      "code": 6011,
+      "code": 6010,
       "name": "Unauthorized",
       "msg": "Unauthorized"
     },
     {
-      "code": 6012,
+      "code": 6011,
       "name": "InsufficientEscrowFunds",
       "msg": "Insufficient funds in escrow account for payout"
     },
     {
-      "code": 6013,
+      "code": 6012,
       "name": "InvalidAccount",
       "msg": "Invalid account provided"
     },
     {
-      "code": 6014,
+      "code": 6013,
       "name": "ArithmeticOverflow",
       "msg": "Arithmetic overflow"
     },
     {
-      "code": 6015,
+      "code": 6014,
       "name": "InvalidTokenMint",
       "msg": "Invalid token mint"
     },
     {
-      "code": 6016,
+      "code": 6015,
       "name": "InvalidTokenAccount",
       "msg": "Invalid token account"
+    },
+    {
+      "code": 6016,
+      "name": "NoWinners",
+      "msg": "No winners to distribute prize pool"
     }
   ],
   "types": [
@@ -676,10 +560,6 @@
           },
           {
             "name": "round_id",
-            "type": "u64"
-          },
-          {
-            "name": "amount",
             "type": "u64"
           },
           {
@@ -717,10 +597,6 @@
           {
             "name": "bettor",
             "type": "pubkey"
-          },
-          {
-            "name": "amount",
-            "type": "u64"
           },
           {
             "name": "prediction",
@@ -779,8 +655,8 @@
             "type": "u32"
           },
           {
-            "name": "fee_percentage",
-            "type": "u8"
+            "name": "prize_pool_amount",
+            "type": "u64"
           },
           {
             "name": "phase",
@@ -837,6 +713,10 @@
           {
             "name": "token_mint",
             "type": "pubkey"
+          },
+          {
+            "name": "prize_pool_amount",
+            "type": "u64"
           }
         ]
       }
@@ -867,26 +747,6 @@
           },
           {
             "name": "Survival"
-          }
-        ]
-      }
-    },
-    {
-      "name": "FeesClaimed",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "round_id",
-            "type": "u64"
-          },
-          {
-            "name": "treasury",
-            "type": "pubkey"
-          },
-          {
-            "name": "amount",
-            "type": "u64"
           }
         ]
       }
@@ -954,15 +814,7 @@
             "type": "pubkey"
           },
           {
-            "name": "original_bet",
-            "type": "u64"
-          },
-          {
-            "name": "prize_share",
-            "type": "u64"
-          },
-          {
-            "name": "total_payout",
+            "name": "payout_amount",
             "type": "u64"
           }
         ]

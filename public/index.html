@@ -952,24 +952,28 @@
                 
                 <div class="betting-section" id="bettingSection" style="display: none;">
                     <h3>⚡ PLACE YOUR BETS ⚡</h3>
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="font-size: 1.2rem; color: #ffd700; margin-bottom: 10px;">💰 PRIZE POOL: 300,000 $RAIDIT 💰</div>
+                        <div style="font-size: 0.95rem; color: #a4b0be;">Betting is FREE! Winners split the prize pool!</div>
+                    </div>
                     <div class="betting-pools">
                         <div class="betting-pool death">
                             <div class="pool-title">💀 BOSS DIES</div>
-                            <div class="pool-amount" id="deathPool">0 $RAIDIT</div>
+                            <div class="pool-amount" id="deathPool">0 BETS</div>
                         </div>
                         <div class="betting-pool survival">
                             <div class="pool-title">🛡️ BOSS SURVIVES</div>
-                            <div class="pool-amount" id="survivalPool">0 $RAIDIT</div>
+                            <div class="pool-amount" id="survivalPool">0 BETS</div>
                         </div>
                     </div>
-                    
+
                     <div class="bet-form" id="betForm">
                         <div class="bet-buttons">
-                            <button class="bet-btn death" id="betDeath">BET 300000 $RAIDIT - DEATH</button>
-                            <button class="bet-btn survival" id="betSurvival">BET 300000 $RAIDIT - SURVIVAL</button>
+                            <button class="bet-btn death" id="betDeath">BET FREE - DEATH</button>
+                            <button class="bet-btn survival" id="betSurvival">BET FREE - SURVIVAL</button>
                         </div>
                     </div>
-                    
+
                     <button class="admin-btn" id="claimPayoutBtn" style="display: none;">CLAIM WINNINGS</button>
                 </div>
             </div>
@@ -1028,7 +1032,7 @@
         const connection = new solanaWeb3.Connection(DEVNET_RPC, 'confirmed');
         
         // Socket connection
-        const socket = io('https://boss-fight-pump-fun.onrender.com');
+        const socket = io('http://localhost:3000/'); // https://boss-fight-pump-fun.onrender.com'
         const audioSystem = {
             context: null,
             masterVolume: 0.5,
@@ -1464,8 +1468,8 @@
                 el.bettingSection.style.display = 'none';
             }
             
-            el.deathPool.textContent = `${(gameState.totalDeathBets || 0).toFixed(2)} $RAIDIT`;
-            el.survivalPool.textContent = `${(gameState.totalSurvivalBets || 0).toFixed(2)} $RAIDIT`;
+            el.deathPool.textContent = `${gameState.totalDeathBets || 0} BETS`;
+            el.survivalPool.textContent = `${gameState.totalSurvivalBets || 0} BETS`;
             
             el.lastHitter.textContent = gameState.lastHitter || 'None';
             el.totalHits.textContent = gameState.totalHits || '0';
@@ -1836,122 +1840,81 @@ console.log('Phantom provider:', getPhantomProvider());
         async function placeBet(prediction) {
             // Generate username from wallet address
             const username = wallet.address ? `${wallet.address.substring(0, 4)}...${wallet.address.substring(wallet.address.length - 4)}` : 'Anonymous';
-            const amount = 300000;
-            
-            if (!wallet.connected) { 
-                showMessage('⚠️ Connect wallet first'); 
+
+            if (!wallet.connected) {
+                showMessage('⚠️ Connect wallet first');
                 audioSystem.playErrorSound();
-                return; 
+                return;
             }
-            if (userBet) { 
-                showMessage('ℹ️ Already placed bet'); 
-                return; 
+            if (userBet) {
+                showMessage('ℹ️ Already placed bet');
+                return;
             }
-            
+
             el.betDeath.disabled = true;
             el.betSurvival.disabled = true;
-            
+
             try {
-                showMessage('⏳ Preparing transaction...');
+                showMessage('⏳ Placing your free bet...');
 
                 const response = await fetch('/api/place-bet', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        walletAddress: wallet.address, 
-                        username, 
-                        amount, 
-                        prediction 
+                    body: JSON.stringify({
+                        walletAddress: wallet.address,
+                        username,
+                        prediction
                     })
                 });
-                
+
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.error || 'Failed to prepare transaction');
+                    throw new Error(errorData.error || 'Failed to place bet');
                 }
-                
-                const { transaction: base64Tx } = await response.json();
-                const txBytes = Uint8Array.from(atob(base64Tx), c => c.charCodeAt(0));
-                const transaction = solanaWeb3.Transaction.from(txBytes);
-                
-                showMessage('✍️ Sign transaction in your wallet...');
-                const signed = await wallet.phantom.signTransaction(transaction);
-                
-                showMessage('📡 Sending transaction...');
-                
-                // Get recent blockhash to ensure uniqueness
-                const { blockhash } = await connection.getLatestBlockhash('confirmed');
-                transaction.recentBlockhash = blockhash;
-                
-                const signature = await connection.sendRawTransaction(signed.serialize(), {
-                    skipPreflight: false,
-                    preflightCommitment: 'confirmed',
-                    maxRetries: 2
-                });
-                
-                showMessage('⏳ Confirming transaction...');
-                
-                // Wait for confirmation with timeout
-                const confirmation = await Promise.race([
-                    connection.confirmTransaction({
-                        signature: signature,
-                        blockhash: blockhash,
-                        lastValidBlockHeight: (await connection.getLatestBlockhash()).lastValidBlockHeight
-                    }, 'confirmed'),
-                    new Promise((_, reject) => setTimeout(() => reject(new Error('Transaction confirmation timeout')), 30000))
-                ]);
-                
-                if (confirmation.value.err) {
-                    throw new Error('Transaction failed: ' + JSON.stringify(confirmation.value.err));
-                }
-                
-                userBet = { roundId: gameState.currentRoundId, amount, prediction, username, signature };
+
+                const data = await response.json();
+
+                userBet = { roundId: gameState.currentRoundId, prediction, username };
                 el.betForm.classList.remove('active');
-                showMessage(`✅ Bet placed successfully! 300000 $RAIDIT on ${prediction}`);
-                
+                showMessage(`✅ Free bet placed on ${prediction.toUpperCase()}!`);
+
                 // Notify server
                 await fetch('/api/bet-notification', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        walletAddress: wallet.address, 
-                        username, 
-                        amount, 
-                        prediction, 
-                        signature 
+                    body: JSON.stringify({
+                        walletAddress: wallet.address,
+                        username,
+                        prediction
                     })
                 });
-                
+
                 audioSystem.playBetPlaced();
                 setTimeout(() => audioSystem.playCoinDrop(), 200);
-                
+
             } catch (error) {
                 console.error('Bet error:', error);
-                
+
                 // Check if bet was actually placed despite error
-                if (error.message.includes('already processed') || error.message.includes('BlockhashNotFound')) {
-                    // Transaction might have succeeded, verify on chain
-                    try {
-                        const betStatus = await fetch(`/api/bet-status/${wallet.address}/${gameState.currentRoundId}`);
-                        const data = await betStatus.json();
-                        
-                        if (data.exists) {
-                            userBet = { 
-                                roundId: gameState.currentRoundId, 
-                                amount: data.amount, 
-                                prediction: data.prediction, 
-                                username: data.username 
-                            };
-                            el.betForm.classList.remove('active');
-                            showMessage('✅ Bet was placed successfully!');
-                            audioSystem.playBetPlaced();
-                            return;
-                        }
-                    } catch (checkError) {
-                        console.log('Could not verify bet status');
+                try {
+                    const betStatus = await fetch(`/api/bet-status/${wallet.address}/${gameState.currentRoundId}`);
+                    const data = await betStatus.json();
+
+                    if (data.exists) {
+                        userBet = {
+                            roundId: gameState.currentRoundId,
+                            prediction: data.prediction,
+                            username: data.username
+                        };
+                        el.betForm.classList.remove('active');
+                        showMessage('✅ Bet was placed successfully!');
+                        audioSystem.playBetPlaced();
+                        return;
                     }
+                } catch (checkError) {
+                    console.log('Could not verify bet status');
                 }
-                
+
                 showMessage('❌ Error: ' + error.message);
                 audioSystem.playErrorSound();
                 el.betDeath.disabled = false;

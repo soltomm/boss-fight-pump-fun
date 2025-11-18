@@ -96,10 +96,11 @@ function getAnchorDiscriminator(name) {
 
 const BET_ACCOUNT_DISCRIMINATOR = getAnchorDiscriminator('BetAccount');
 
-// Load authority keypair
+// Load authority and treasury keypairs
 const connection = new Connection(SOLANA_RPC_URL, 'confirmed');
 const tokenMint = new PublicKey(TOKEN_MINT_STR);
 let authorityKeypair;
+let treasuryKeypair;
 
 try {
   if (!process.env.AUTHORITY_SECRET_KEY){
@@ -111,6 +112,16 @@ try {
   );
   console.log('✅ Authority loaded from env variable');
   console.log('🔑 Authority address:', authorityKeypair.publicKey.toString());
+
+  if (!process.env.TREASURY_SECRET_KEY){
+    console.error('Missing TREASURY_SECRET_KEY');
+    process.exit(1);
+  }
+  treasuryKeypair = Keypair.fromSecretKey(
+    bs58.decode(process.env.TREASURY_SECRET_KEY)
+  );
+  console.log('✅ Treasury loaded from env variable');
+  console.log('🏦 Treasury address:', treasuryKeypair.publicKey.toString());
   console.log('🪙 Token mint:', TOKEN_MINT_STR);
   
   // Fetch token decimals
@@ -144,7 +155,7 @@ try {
 const wallet = new Wallet(authorityKeypair);
 const provider = new AnchorProvider(connection, wallet, { commitment: 'confirmed' });
 const programId = new PublicKey(PROGRAM_ID_STR);
-const treasuryPubkey = new PublicKey(TREASURY_WALLET);
+const treasuryPubkey = treasuryKeypair.publicKey;
 
 // Load IDL
 const idl = JSON.parse(fs.readFileSync(path.join(__dirname, 'target', 'idl_new.json'), 'utf8'));
@@ -172,7 +183,7 @@ let pumpSocket = null;
 let reconnectAttempts = 0;
 const maxReconnectAttempts = 10;
 const reconnectInterval = 5000;
-const WAITING_DURATION = process.env.WAITING_DURATION ||5 * 60; // 5 minutes in seconds
+const WAITING_DURATION = process.env.WAITING_DURATION || 5 * 60; // 5 minutes in seconds
 let waitingEndTime = null;
 let waitingTimer = null;
 
@@ -218,12 +229,12 @@ app.get('/api/game-status', (req, res) => {
     totalHits,
     coinAddress: COIN_ADDRESS,
     programId: PROGRAM_ID_STR,
-    tokenMint: TOKEN_MINT_STR, // NEW
-    tokenDecimals, // NEW
+    tokenMint: TOKEN_MINT_STR,
+    tokenDecimals,
     bettingEndTime,
     fightEndTime,
-    totalDeathBets: fromBaseUnits(totalDeathBets),
-    totalSurvivalBets: fromBaseUnits(totalSurvivalBets),
+    totalDeathBets: totalDeathBets,
+    totalSurvivalBets: totalSurvivalBets,
     totalBets: onChainBets.size
   });
 });
@@ -256,30 +267,28 @@ app.get('/api/betting-round/:roundId', async (req, res) => {
 
 app.post('/api/bet-notification', (req, res) => {
   try {
-    const { walletAddress, username, amount, prediction, signature } = req.body;
-    
-    console.log(`Bet notification received: ${username} (${walletAddress}) bet ${amount} tokens on ${prediction}`);
-    
+    const { walletAddress, username, prediction } = req.body;
+
+    console.log(`Bet notification received: ${username} (${walletAddress}) bet on ${prediction}`);
+
     onChainBets.set(walletAddress, {
       username,
-      amount: toBaseUnits(amount),
       prediction,
-      signature,
       timestamp: Date.now()
     });
-    
+
     if (prediction === 'death') {
-      totalDeathBets += toBaseUnits(amount);
+      totalDeathBets += 1;
     } else {
-      totalSurvivalBets += toBaseUnits(amount);
+      totalSurvivalBets += 1;
     }
-    
+
     io.emit('betting_update', {
-      totalDeathBets: fromBaseUnits(totalDeathBets),
-      totalSurvivalBets: fromBaseUnits(totalSurvivalBets),
+      totalDeathBets: totalDeathBets,
+      totalSurvivalBets: totalSurvivalBets,
       totalBets: onChainBets.size
     });
-    
+
     res.json({ success: true, message: 'Bet notification received' });
   } catch (error) {
     console.error('Error processing bet notification:', error);
@@ -292,14 +301,14 @@ app.get('/api/current-round', (req, res) => {
     gamePhase,
     currentRoundId,
     programId: PROGRAM_ID_STR,
-    tokenMint: TOKEN_MINT_STR, // NEW
-    tokenDecimals, // NEW
+    tokenMint: TOKEN_MINT_STR,
+    tokenDecimals,
     bettingRoundPDA: bettingRoundPDA ? bettingRoundPDA.toString() : null,
-    escrowTokenAccountPDA: escrowTokenAccountPDA ? escrowTokenAccountPDA.toString() : null, // NEW: Changed name
+    escrowTokenAccountPDA: escrowTokenAccountPDA ? escrowTokenAccountPDA.toString() : null,
     bettingEndTime,
     fightEndTime,
-    totalDeathBets: fromBaseUnits(totalDeathBets),
-    totalSurvivalBets: fromBaseUnits(totalSurvivalBets),
+    totalDeathBets: totalDeathBets,
+    totalSurvivalBets: totalSurvivalBets,
     totalBets: onChainBets.size
   });
 });
@@ -348,95 +357,43 @@ async function ensureTokenAccount(connection, mint, owner, payer) {
 
 app.post('/api/place-bet', async (req, res) => {
   try {
-    const { walletAddress, username, amount, prediction } = req.body;
-    
+    const { walletAddress, username, prediction } = req.body;
+
     if (gamePhase !== GAME_PHASES.BETTING || !currentRoundId) {
       return res.status(400).json({ error: 'Betting is closed or no round is active' });
     }
-    
-    const bettor = new PublicKey(walletAddress);
-    const [betPDA] = getBetPDA(currentRoundId, bettor);
-    const amountInBaseUnits = toBaseUnits(amount);
-    
-    // Check for existing bet
-    try {
-      await program.account.betAccount.fetch(betPDA);
+
+    // Check if user already placed a bet
+    if (onChainBets.has(walletAddress)) {
       return res.status(400).json({ error: 'Bet already placed for this round' });
-    } catch (err) {
-      // Bet doesn't exist, proceed
     }
-    
-    const predictionEnum = prediction === 'death' ? { death: {} } : { survival: {} };
-    
-    // NEW: Get bettor's token account (and create instruction if needed)
-    const { address: bettorTokenAccount, instruction: createBettorTokenAccountIx } = 
-      await ensureTokenAccount(connection, tokenMint, bettor, bettor);
-    
-    // Build transaction with token accounts
-    const transaction = await program.methods
-      .placeBet(new BN(amountInBaseUnits), predictionEnum, username)
-      .accounts({
-        bettingRound: bettingRoundPDA,
-        betAccount: betPDA,
-        escrowTokenAccount: escrowTokenAccountPDA, // NEW: Token escrow
-        bettorTokenAccount: bettorTokenAccount, // NEW: User's token account
-        bettor: bettor,
-        systemProgram: SystemProgram.programId,
-        tokenProgram: TOKEN_PROGRAM_ID, // NEW
-      })
-      .transaction();
-    
-    // Add create token account instruction if needed
-    if (createBettorTokenAccountIx) {
-      transaction.instructions.unshift(createBettorTokenAccountIx);
-    }
-    
-    const { blockhash, lastValidBlockHeight } = await getRobustBlockhash(
-      connection, 
-      'processed'
-    );
-    
-    transaction.recentBlockhash = blockhash;
-    transaction.feePayer = bettor;
-    
-    const serializedTx = transaction.serialize({ 
-      requireAllSignatures: false,
-      verifySignatures: false 
-    });
-    const base64Tx = serializedTx.toString('base64');
-    
+
+    // Simply acknowledge the bet - no blockchain transaction needed
     res.json({
       success: true,
-      transaction: base64Tx,
-      blockhash: blockhash, 
-      lastValidBlockHeight: lastValidBlockHeight,
-      message: 'Transaction prepared for signing',
-      tokenDecimals // NEW: Send decimals info
+      message: 'Free bet accepted'
     });
-    
+
   } catch (error) {
-    console.error('Error preparing bet transaction:', error);
-    res.status(500).json({ error: 'Error preparing bet transaction' });
+    console.error('Error placing bet:', error);
+    res.status(500).json({ error: 'Error placing bet' });
   }
 });
 
 app.get('/api/bet-status/:walletAddress/:roundId', async (req, res) => {
   try {
     const { walletAddress, roundId } = req.params;
-    const bettor = new PublicKey(walletAddress);
-    const [betPDA] = getBetPDA(parseInt(roundId), bettor);
-    
-    try {
-      const betAccount = await program.account.betAccount.fetch(betPDA);
+
+    // Check in-memory bet storage
+    if (onChainBets.has(walletAddress) && parseInt(roundId) === currentRoundId) {
+      const bet = onChainBets.get(walletAddress);
       res.json({
         exists: true,
-        amount: fromBaseUnits(betAccount.amount.toNumber()),
-        prediction: Object.keys(betAccount.prediction)[0],
-        username: betAccount.username,
-        payoutClaimed: betAccount.payoutClaimed,
-        timestamp: betAccount.timestamp.toNumber()
+        prediction: bet.prediction,
+        username: bet.username,
+        timestamp: bet.timestamp
       });
-    } catch (error) {
+    } else {
       res.json({ exists: false });
     }
   } catch (error) {
@@ -467,11 +424,11 @@ io.on('connection', (socket) => {
     top: getTop(3),
     lastHitter,
     chronological: chronological.slice(-10),
-    totalDeathBets: fromBaseUnits(totalDeathBets),
-    totalSurvivalBets: fromBaseUnits(totalSurvivalBets),
+    totalDeathBets: totalDeathBets,
+    totalSurvivalBets: totalSurvivalBets,
     totalBets: onChainBets.size,
-    tokenMint: TOKEN_MINT_STR, // NEW
-    tokenDecimals, // NEW
+    tokenMint: TOKEN_MINT_STR,
+    tokenDecimals,
     timeRemaining: gamePhase === GAME_PHASES.BETTING ? Math.max(0, bettingEndTime - Date.now()) : 0,
     fightTimeRemaining: gamePhase === GAME_PHASES.FIGHTING ? Math.max(0, fightEndTime - Date.now()) : 0,
     connected: pumpSocket?.readyState === WebSocket.OPEN || false
@@ -674,27 +631,37 @@ async function startBettingPhase() {
         const [escrowTokenAccountPDAResult] = getEscrowTokenAccountPDA(currentRoundId);
         bettingRoundPDA = bettingRoundPDAResult;
         escrowTokenAccountPDA = escrowTokenAccountPDAResult;
-        
+
         if (program) {
+          // Get treasury token account
+          const { address: treasuryTokenAccount, instruction: createTreasuryTokenAccountIx } =
+            await ensureTokenAccount(connection, tokenMint, treasuryPubkey, authorityKeypair.publicKey);
+
+          // Prize pool is 300k tokens in base units
+          const PRIZE_POOL = 300000;
+          const prizePoolBaseUnits = toBaseUnits(PRIZE_POOL);
+
           const tx = await program.methods
             .initializeBettingRound(
               new BN(currentRoundId),
               new BN(BETTING_DURATION),
               new BN(FIGHT_DURATION),
               INITIAL_HP,
-              FEE_PERCENTAGE
+              new BN(prizePoolBaseUnits)
             )
             .accounts({
               bettingRound: bettingRoundPDA,
               escrowTokenAccount: escrowTokenAccountPDA,
               tokenMint: tokenMint,
+              treasuryTokenAccount: treasuryTokenAccount,
               authority: authorityKeypair.publicKey,
               treasury: treasuryPubkey,
               systemProgram: SystemProgram.programId,
               tokenProgram: TOKEN_PROGRAM_ID,
               rent: web3.SYSVAR_RENT_PUBKEY,
             })
-            .signers([authorityKeypair])
+            .preInstructions(createTreasuryTokenAccountIx ? [createTreasuryTokenAccountIx] : [])
+            .signers([authorityKeypair, treasuryKeypair]) // Both authority and treasury must sign
             .rpc();
           
           console.log('Betting round initialized on blockchain:', tx);
@@ -792,58 +759,28 @@ async function startFightingPhase(retryCount = 0) {
 
 async function loadBettingData() {
   try {
-    if (!bettingRoundPDA || !program) return;
-    
-    const bettingRoundAccount = await program.account.bettingRound.fetch(bettingRoundPDA);
-    
-    totalDeathBets = bettingRoundAccount.totalDeathBets.toNumber();
-    totalSurvivalBets = bettingRoundAccount.totalSurvivalBets.toNumber();
-    
-    console.log(`Loaded betting data - Death: ${fromBaseUnits(totalDeathBets)} tokens, Survival: ${fromBaseUnits(totalSurvivalBets)} tokens`);
-    console.log(`Total bets count: ${bettingRoundAccount.totalBetsCount.toNumber()}`);
-    
-    const roundIdBuffer = bettingRoundAccount.roundId.toArrayLike(Buffer, 'le', 8);
+    // Betting data is already in memory (onChainBets map)
+    // Just recalculate counts
+    totalDeathBets = 0;
+    totalSurvivalBets = 0;
 
-    const betAccounts = await connection.getProgramAccounts(programId, {
-      filters: [
-        {
-          memcmp: {
-            offset: 0, 
-            bytes: bs58.encode(BET_ACCOUNT_DISCRIMINATOR),
-          }
-        },
-        {
-          memcmp: {
-            offset: 40, 
-            bytes: bs58.encode(roundIdBuffer),
-          }
-        }
-      ]
-    });
-    
-    console.log(`Found ${betAccounts.length} bet accounts on-chain`);
-    
-    onChainBets.clear();
-    for (const { pubkey, account } of betAccounts) {
-      try {
-        const betData = await program.account.betAccount.fetch(pubkey);
-        onChainBets.set(betData.bettor.toString(), {
-          username: betData.username,
-          amount: betData.amount.toNumber(),
-          prediction: Object.keys(betData.prediction)[0],
-          timestamp: betData.timestamp.toNumber()
-        });
-      } catch (err) {
-        console.error('Error parsing bet account:', err);
+    for (const [walletAddress, bet] of onChainBets.entries()) {
+      if (bet.prediction === 'death') {
+        totalDeathBets++;
+      } else {
+        totalSurvivalBets++;
       }
     }
-    
+
+    console.log(`Loaded betting data - Death: ${totalDeathBets} bets, Survival: ${totalSurvivalBets} bets`);
+    console.log(`Total bets count: ${onChainBets.size}`);
+
     io.emit('betting_update', {
-      totalDeathBets: fromBaseUnits(totalDeathBets),
-      totalSurvivalBets: fromBaseUnits(totalSurvivalBets),
+      totalDeathBets: totalDeathBets,
+      totalSurvivalBets: totalSurvivalBets,
       totalBets: onChainBets.size
     });
-    
+
   } catch (error) {
     console.error('Error loading betting data:', error);
     throw error;
@@ -908,126 +845,113 @@ async function claimFees() {
 }
 
 async function processPayouts() {
-  if (!bettingRoundPDA || !program) {
-    console.log('Cannot process payouts - no active round or program not loaded');
-    return;
-  }
-  
   try {
     console.log('Processing payouts...');
-    
-    const bettingRoundAccount = await program.account.bettingRound.fetch(bettingRoundPDA);
-    
-    const bossDefeated = bossHP === 0;
-    const totalDeathBetsAmount = bettingRoundAccount.totalDeathBets.toNumber();
-    const totalSurvivalBetsAmount = bettingRoundAccount.totalSurvivalBets.toNumber();
-    
-    const winningPrediction = bossDefeated ? 'death' : 'survival';
-    const totalWinnerBets = bossDefeated ? totalDeathBetsAmount : totalSurvivalBetsAmount;
-    const totalLoserBets = bossDefeated ? totalSurvivalBetsAmount : totalDeathBetsAmount;
-    
-    console.log(`Boss ${bossDefeated ? 'defeated' : 'survived'}`);
-    console.log(`Winning side: ${winningPrediction}`);
-    console.log(`Total winner bets: ${fromBaseUnits(totalWinnerBets)} tokens`);
-    console.log(`Total loser bets (prize pool): ${fromBaseUnits(totalLoserBets)} tokens`);
-    
-    if (totalWinnerBets === 0) {
-      console.log('No winners - claiming fees only.');
-      await claimFees(); 
-      return;
-    }
-    
-    const roundIdBuffer = bettingRoundAccount.roundId.toArrayLike(Buffer, 'le', 8);
 
-    const betAccounts = await connection.getProgramAccounts(programId, {
-      filters: [
-        {
-          memcmp: {
-            offset: 0, 
-            bytes: bs58.encode(BET_ACCOUNT_DISCRIMINATOR),
-          }
-        },
-        {
-          memcmp: {
-            offset: 40, 
-            bytes: bs58.encode(roundIdBuffer),
-          }
-        }
-      ]
-    });
-    
-    console.log(`Found ${betAccounts.length} bet accounts to process`);
-    
-    const payoutResults = [];
-    
-    for (const { pubkey, account } of betAccounts) {
-      try {
-        const betData = await program.account.betAccount.fetch(pubkey);
-        const betPrediction = Object.keys(betData.prediction)[0];
-        const betAmount = betData.amount.toNumber();
-        const bettor = betData.bettor;
-        
-        if (betPrediction === winningPrediction) {
-          const feeAmount = Math.floor(totalLoserBets * bettingRoundAccount.feePercentage / 100);
-          const prizePool = totalLoserBets - feeAmount;
-          const prizeShare = Math.floor((prizePool * betAmount) / totalWinnerBets);
-          const totalPayout = betAmount + prizeShare;
-          
-          console.log(`Winner: ${betData.username} - Bet: ${fromBaseUnits(betAmount)} tokens, Prize: ${fromBaseUnits(prizeShare)} tokens, Total: ${fromBaseUnits(totalPayout)} tokens`);
-          
-          try {
-            // NEW: Get bettor's token account
-            const { address: bettorTokenAccount, instruction: createBettorTokenAccountIx } = 
-              await ensureTokenAccount(connection, tokenMint, bettor, authorityKeypair.publicKey);
-            
-            const tx = await program.methods
-              .claimPayout()
-              .accounts({
-                bettingRound: bettingRoundPDA,
-                betAccount: pubkey,
-                escrowTokenAccount: escrowTokenAccountPDA, // NEW
-                bettorTokenAccount: bettorTokenAccount, // NEW
-                bettor: bettor,
-                authority: authorityKeypair.publicKey,
-                systemProgram: SystemProgram.programId,
-                tokenProgram: TOKEN_PROGRAM_ID, // NEW
-              })
-              .signers([authorityKeypair])
-              .preInstructions(createBettorTokenAccountIx ? [createBettorTokenAccountIx] : [])
-              .rpc();
-            
-            console.log(`Payout processed for ${betData.username}: ${tx}`);
-            
-            payoutResults.push({
-              username: betData.username,
-              wallet: bettor.toString(),
-              betAmount: fromBaseUnits(betAmount),
-              prizeShare: fromBaseUnits(prizeShare),
-              totalPayout: fromBaseUnits(totalPayout),
-              signature: tx
-            });
-          } catch (payoutError) {
-            console.error(`Error processing payout for ${betData.username}:`, payoutError.message);
-          }
-        } else {
-          console.log(`Loser: ${betData.username} - Lost ${fromBaseUnits(betAmount)} tokens`);
-        }
-      } catch (err) {
-        console.error('Error processing bet account:', err);
+    const bossDefeated = bossHP === 0;
+    const winningPrediction = bossDefeated ? 'death' : 'survival';
+
+    // Count winners
+    let winnerCount = 0;
+    const winners = [];
+
+    for (const [walletAddress, bet] of onChainBets.entries()) {
+      if (bet.prediction === winningPrediction) {
+        winnerCount++;
+        winners.push({
+          walletAddress,
+          username: bet.username
+        });
       }
     }
-    
-    await claimFees();
+
+    console.log(`Boss ${bossDefeated ? 'defeated' : 'survived'}`);
+    console.log(`Winning side: ${winningPrediction}`);
+    console.log(`Total winners: ${winnerCount}`);
+
+    if (winnerCount === 0) {
+      console.log('No winners - no payouts to process');
+      io.emit('payouts_processed', {
+        bossDefeated,
+        winningPrediction,
+        totalPrizePool: 300000,
+        winningBets: 0,
+        payouts: []
+      });
+      return;
+    }
+
+    // Prize pool is 300k tokens, split equally among winners
+    const PRIZE_POOL = 300000;
+    const payoutPerWinner = Math.floor(PRIZE_POOL / winnerCount);
+    const payoutPerWinnerInBaseUnits = toBaseUnits(payoutPerWinner);
+
+    console.log(`Prize pool: ${PRIZE_POOL} tokens`);
+    console.log(`Payout per winner: ${payoutPerWinner} tokens`);
+
+    const payoutResults = [];
+
+    // Process payouts for each winner
+    for (const winner of winners) {
+      try {
+        const winnerPubkey = new PublicKey(winner.walletAddress);
+
+        // Get winner's token account
+        const { address: winnerTokenAccount, instruction: createWinnerTokenAccountIx } =
+          await ensureTokenAccount(connection, tokenMint, winnerPubkey, authorityKeypair.publicKey);
+
+        // Get treasury token account
+        const { address: treasuryTokenAccount } =
+          await ensureTokenAccount(connection, tokenMint, treasuryPubkey, authorityKeypair.publicKey);
+
+        console.log(`Sending ${payoutPerWinner} tokens to ${winner.username} (${winner.walletAddress})`);
+
+        // Create transfer instruction from treasury to winner
+        const { createTransferInstruction } = require('@solana/spl-token');
+
+        const transferIx = createTransferInstruction(
+          treasuryTokenAccount,
+          winnerTokenAccount,
+          treasuryKeypair.publicKey, // Treasury signs, not authority
+          payoutPerWinnerInBaseUnits,
+          [],
+          TOKEN_PROGRAM_ID
+        );
+
+        const transaction = new web3.Transaction();
+        if (createWinnerTokenAccountIx) {
+          transaction.add(createWinnerTokenAccountIx);
+        }
+        transaction.add(transferIx);
+
+        const signature = await web3.sendAndConfirmTransaction(
+          connection,
+          transaction,
+          createWinnerTokenAccountIx ? [authorityKeypair, treasuryKeypair] : [treasuryKeypair], // Treasury must sign the transfer
+          { commitment: 'confirmed' }
+        );
+
+        console.log(`Payout processed for ${winner.username}: ${signature}`);
+
+        payoutResults.push({
+          username: winner.username,
+          wallet: winner.walletAddress,
+          payout: payoutPerWinner,
+          signature: signature
+        });
+      } catch (payoutError) {
+        console.error(`Error processing payout for ${winner.username}:`, payoutError.message);
+      }
+    }
 
     io.emit('payouts_processed', {
       bossDefeated,
       winningPrediction,
-      totalPrizePool: fromBaseUnits(totalLoserBets),
-      totalWinnerBets: fromBaseUnits(totalWinnerBets),
+      totalPrizePool: PRIZE_POOL,
       winningBets: payoutResults.length,
       payouts: payoutResults
     });
-    
+
     console.log('Payout processing complete');
     return payoutResults;
   } catch (error) {
@@ -1207,13 +1131,13 @@ function buildResults(bossDefeated) {
     lastHitter,
     scores: Array.from(userHits.entries()).map(([username, hits]) => ({ username, hits })),
     totalHits,
-    totalDeathBets: fromBaseUnits(totalDeathBets),
-    totalSurvivalBets: fromBaseUnits(totalSurvivalBets),
+    totalDeathBets: totalDeathBets,
+    totalSurvivalBets: totalSurvivalBets,
     coinAddress: COIN_ADDRESS,
     programId: PROGRAM_ID_STR,
-    tokenMint: TOKEN_MINT_STR, // NEW
+    tokenMint: TOKEN_MINT_STR,
     bettingRoundPDA: bettingRoundPDA ? bettingRoundPDA.toString() : null,
-    escrowTokenAccountPDA: escrowTokenAccountPDA ? escrowTokenAccountPDA.toString() : null, // NEW
+    escrowTokenAccountPDA: escrowTokenAccountPDA ? escrowTokenAccountPDA.toString() : null,
     timestamp: formatISO(new Date())
   };
 }
