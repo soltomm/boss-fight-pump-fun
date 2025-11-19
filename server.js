@@ -70,6 +70,22 @@ const FIGHT_DURATION = 60;
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'aaa';
 const ADMIN_WALLET = process.env.ADMIN_WALLET || '5GrJ4aUiQRc1frnxyv89ws27wPu2fxsgJvxHgLmEjBBq';
 
+// Load whitelisted betting wallets (if specified)
+const WHITELISTED_BETTING_WALLETS = process.env.WHITELISTED_BETTING_WALLETS
+  ? process.env.WHITELISTED_BETTING_WALLETS.split(',').map(w => w.trim()).filter(Boolean)
+  : null; // null means no whitelist (allow all)
+
+// Helper function to check if a wallet is authorized to place bets
+function isWalletAuthorizedToBet(walletAddress) {
+  // If no whitelist is configured, allow all wallets
+  if (!WHITELISTED_BETTING_WALLETS || WHITELISTED_BETTING_WALLETS.length === 0) {
+    return true;
+  }
+
+  // Check if wallet is in the whitelist
+  return WHITELISTED_BETTING_WALLETS.includes(walletAddress);
+}
+
 let fightEndingInProgress = false;
 let fightEndCalled = false;
 let tokenDecimals = 6; // Will be fetched from mint
@@ -269,6 +285,12 @@ app.post('/api/bet-notification', (req, res) => {
   try {
     const { walletAddress, username, prediction } = req.body;
 
+    // Check if wallet is authorized to place bets
+    if (!isWalletAuthorizedToBet(walletAddress)) {
+      console.log(`Unauthorized bet notification from wallet: ${walletAddress}`);
+      return res.status(403).json({ error: 'Wallet not authorized to place bets' });
+    }
+
     console.log(`Bet notification received: ${username} (${walletAddress}) bet on ${prediction}`);
 
     onChainBets.set(walletAddress, {
@@ -363,10 +385,18 @@ app.post('/api/place-bet', async (req, res) => {
       return res.status(400).json({ error: 'Betting is closed or no round is active' });
     }
 
+    // Check if wallet is authorized to place bets
+    if (!isWalletAuthorizedToBet(walletAddress)) {
+      console.log(`Unauthorized bet attempt from wallet: ${walletAddress}`);
+      return res.status(403).json({ error: 'Wallet not authorized to place bets' });
+    }
+
     // Check if user already placed a bet
     if (onChainBets.has(walletAddress)) {
       return res.status(400).json({ error: 'Bet already placed for this round' });
     }
+
+    console.log(`Free bet accepted from ${username} (${walletAddress}) on ${prediction}`);
 
     // Simply acknowledge the bet - no blockchain transaction needed
     res.json({
@@ -476,7 +506,18 @@ server.listen(PORT, () => {
   console.log(`Token Decimals: ${tokenDecimals}`);
   console.log(`Trigger keywords: ${TRIGGER_KEYWORDS.join(', ')}`);
   console.log(`Heal keywords: ${HEAL_KEYWORDS.join(', ')}`);
-  
+
+  // Log whitelist status
+  if (WHITELISTED_BETTING_WALLETS && WHITELISTED_BETTING_WALLETS.length > 0) {
+    console.log(`\n🔒 BETTING WHITELIST ENABLED`);
+    console.log(`📋 Authorized wallets (${WHITELISTED_BETTING_WALLETS.length}):`);
+    WHITELISTED_BETTING_WALLETS.forEach((wallet, index) => {
+      console.log(`   ${index + 1}. ${wallet}`);
+    });
+  } else {
+    console.log(`\n🔓 BETTING WHITELIST DISABLED - All wallets can place bets`);
+  }
+
   connectToPumpFun();
   //autoStartGameLoop();
 });
