@@ -985,6 +985,9 @@
             <a href="terms.html" class="tos-button">
                 📜 TERMS OF SERVICE
             </a>
+            <a href="litepaper.html" class="tos-button" style="margin-top: 10px;">
+                📄 LITEPAPER
+            </a>
             <div class="card leaderboard">
                 <h3>🏆 TOP DAMAGE DEALERS</h3>
                 <div id="topPlayers"></div>
@@ -2386,9 +2389,14 @@ socket.on('phase_change', (data) => {
             }
         });
     </script>
-    <div style="position: fixed; bottom: 10px; right: 10px; z-index: 1000;">
-    <a href="terms.html" style="color: #00f0ff; text-decoration: none; font-size: 0.9rem; opacity: 0.7; transition: opacity 0.3s;" 
-       onmouseover="this.style.opacity='1'" 
+    <div style="position: fixed; bottom: 10px; right: 10px; z-index: 1000; display: flex; gap: 15px;">
+    <a href="litepaper.html" style="color: #ffd700; text-decoration: none; font-size: 0.9rem; opacity: 0.7; transition: opacity 0.3s;"
+       onmouseover="this.style.opacity='1'"
+       onmouseout="this.style.opacity='0.7'">
+        Litepaper
+    </a>
+    <a href="terms.html" style="color: #00f0ff; text-decoration: none; font-size: 0.9rem; opacity: 0.7; transition: opacity 0.3s;"
+       onmouseover="this.style.opacity='1'"
        onmouseout="this.style.opacity='0.7'">
         Terms of Service
     </a>

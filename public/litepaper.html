@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raid It - Litepaper</title>
+    <link rel="icon" type="image/png" href="raid_logo_no_back.png">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: #0a0e27;
+            color: #e0e0e0;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(255, 0, 150, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(0, 240, 255, 0.1) 0%, transparent 50%);
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .header {
+            background: rgba(10, 14, 39, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid rgba(0, 240, 255, 0.3);
+            padding: 20px 40px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid rgba(0, 240, 255, 0.5);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+        }
+
+        .site-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: #00f0ff;
+            text-shadow: 0 0 20px #00f0ff;
+            letter-spacing: 3px;
+        }
+
+        .back-btn {
+            background: linear-gradient(135deg, #00f0ff, #0080ff);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 240, 255, 0.4);
+        }
+
+        .back-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 30px rgba(0, 240, 255, 0.6);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .litepaper-card {
+            background: rgba(10, 14, 39, 0.85);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 50px;
+            border: 2px solid rgba(0, 240, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.8rem;
+            font-weight: 900;
+            text-align: center;
+            color: #00f0ff;
+            text-shadow: 0 0 30px #00f0ff;
+            margin-bottom: 15px;
+            letter-spacing: 4px;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 1.3rem;
+            color: #ffd700;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .version {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.95rem;
+            margin-bottom: 40px;
+            font-style: italic;
+        }
+
+        h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            color: #ffd700;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 15px #ffd700;
+            border-bottom: 2px solid rgba(255, 215, 0, 0.3);
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            color: #00f0ff;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px #00f0ff;
+        }
+
+        p {
+            margin-bottom: 15px;
+            font-size: 1.05rem;
+            color: #e0e0e0;
+        }
+
+        ul {
+            margin: 15px 0 15px 30px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            font-size: 1.05rem;
+            color: #e0e0e0;
+        }
+
+        .phase-box {
+            background: rgba(0, 240, 255, 0.1);
+            border: 2px solid rgba(0, 240, 255, 0.4);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+
+        .phase-box h3 {
+            margin-top: 0;
+            color: #00f0ff;
+            font-size: 1.5rem;
+        }
+
+        .phase-number {
+            display: inline-block;
+            background: linear-gradient(135deg, #00f0ff, #0080ff);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: 900;
+            margin-right: 15px;
+            box-shadow: 0 4px 15px rgba(0, 240, 255, 0.5);
+        }
+
+        .highlight-box {
+            background: rgba(255, 215, 0, 0.15);
+            border-left: 5px solid #ffd700;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+        }
+
+        .highlight-box strong {
+            color: #ffd700;
+            font-size: 1.2rem;
+            display: block;
+            margin-bottom: 10px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .info-box {
+            background: rgba(0, 240, 255, 0.15);
+            border-left: 5px solid #00f0ff;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+        }
+
+        .info-box strong {
+            color: #00f0ff;
+            font-size: 1.2rem;
+            display: block;
+            margin-bottom: 10px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        strong {
+            color: #ffd700;
+            font-weight: 700;
+        }
+
+        .roadmap-timeline {
+            position: relative;
+            padding-left: 40px;
+            margin: 30px 0;
+        }
+
+        .roadmap-timeline::before {
+            content: '';
+            position: absolute;
+            left: 10px;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background: linear-gradient(180deg, #00f0ff, #ffd700);
+            box-shadow: 0 0 10px #00f0ff;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 30px;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -36px;
+            top: 5px;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: #ffd700;
+            border: 3px solid #0a0e27;
+            box-shadow: 0 0 15px #ffd700;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .litepaper-card {
+                padding: 30px 25px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .container {
+                padding: 0 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <img src="raid_logo_no_back.png" alt="Raid It Logo" class="logo">
+                <div class="site-title">RAID IT</div>
+            </div>
+            <div style="display: flex; gap: 15px;">
+                <a href="index.html" class="back-btn">← BACK TO GAME</a>
+                <a href="terms.html" class="back-btn" style="background: linear-gradient(135deg, #ff0080, #ff00ff);">📜 TERMS</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="litepaper-card">
+            <h1>LITEPAPER</h1>
+            <p class="subtitle">The Future of Community-Driven Boss Battles</p>
+            <p class="version">Version 1.0 | November 2025</p>
+
+            <div class="info-box">
+                <strong>🎮 BETA TESTING PHASE</strong>
+                <p>Raid It is currently in experimental beta testing. This document outlines our vision, current status, and roadmap for transforming community gaming on the Solana blockchain.</p>
+            </div>
+
+            <h2>1. EXECUTIVE SUMMARY</h2>
+            <p>Raid It is an innovative social gaming platform that combines the excitement of boss battles with community-driven outcomes. Built on the Solana blockchain, our platform enables players to collectively participate in timed boss fights while betting on outcomes using a free-to-play model during beta testing.</p>
+
+            <p>Our mission is to create an engaging, transparent, and community-focused gaming experience that bridges traditional gaming mechanics with blockchain technology, all while maintaining regulatory compliance and user safety.</p>
+
+            <h2>2. WHAT IS RAID IT?</h2>
+
+            <h3>2.1 Core Concept</h3>
+            <p>Raid It transforms traditional boss battles into a community event where:</p>
+            <ul>
+                <li><strong>Players bet</strong> on whether the boss will be defeated or survive</li>
+                <li><strong>Community participation</strong> determines the outcome through pump.fun chat interactions</li>
+                <li><strong>Winners share</strong> a 300,000 SPL token prize pool</li>
+                <li><strong>Real-time engagement</strong> creates an interactive streaming experience</li>
+            </ul>
+
+            <h3>2.2 Game Mechanics</h3>
+            <p>Each round consists of three phases:</p>
+            <ul>
+                <li><strong>Waiting Phase (5 minutes):</strong> Players prepare and anticipation builds</li>
+                <li><strong>Betting Phase (60 seconds):</strong> Players place FREE bets on "Boss Dies" or "Boss Survives"</li>
+                <li><strong>Fighting Phase (60 seconds):</strong> Community collectively damages/heals the boss through chat keywords</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>💎 FREE TO PLAY</strong>
+                <p>During beta testing, all bets are completely free. Players can participate without any financial commitment while testing the platform and mechanics.</p>
+            </div>
+
+            <h2>3. CURRENT STATUS: BETA TESTING</h2>
+
+            <h3>3.1 Testing Objectives</h3>
+            <p>Our beta phase focuses on:</p>
+            <ul>
+                <li><strong>Technical Validation:</strong> Ensuring smart contracts, game mechanics, and infrastructure are robust</li>
+                <li><strong>Community Interest:</strong> Assessing player engagement and entertainment value</li>
+                <li><strong>Market Research:</strong> Understanding the audience for community-driven gaming experiences</li>
+                <li><strong>Platform Optimization:</strong> Refining UX/UI and gameplay balance</li>
+            </ul>
+
+            <h3>3.2 Beta Participants</h3>
+            <p>Current testing includes:</p>
+            <ul>
+                <li>Limited admin-controlled access for quality control</li>
+                <li>AI bot participants to simulate community interactions</li>
+                <li>Authorized beta testers providing feedback</li>
+                <li>Streaming on pump.fun to gauge organic interest</li>
+            </ul>
+
+            <h3>3.3 Technology Stack</h3>
+            <ul>
+                <li><strong>Blockchain:</strong> Solana (high-speed, low-cost transactions)</li>
+                <li><strong>Smart Contracts:</strong> Anchor framework for secure game logic</li>
+                <li><strong>Token Standard:</strong> SPL tokens for rewards distribution</li>
+                <li><strong>Frontend:</strong> Real-time WebSocket connections for live gameplay</li>
+                <li><strong>Integration:</strong> pump.fun chat client for community interaction</li>
+            </ul>
+
+            <h2>4. PROJECT ROADMAP</h2>
+
+            <div class="phase-box">
+                <h3><span class="phase-number">1</span>Beta Testing & Market Assessment</h3>
+                <p><strong>Status:</strong> Current Phase (Q4 2025)</p>
+                <div class="roadmap-timeline">
+                    <div class="timeline-item">
+                        <strong>Platform Development</strong>
+                        <p>Launch beta version with free betting and token rewards</p>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Community Testing</strong>
+                        <p>Limited access testing with admin users and AI bots</p>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Streaming & Promotion</strong>
+                        <p>Stream gameplay on pump.fun to assess organic interest</p>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Data Collection</strong>
+                        <p>Gather metrics on engagement, retention, and entertainment value</p>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Feedback Integration</strong>
+                        <p>Iterate on game mechanics based on user feedback</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="phase-box">
+                <h3><span class="phase-number">2</span>Sponsorship & Regulatory Preparation</h3>
+                <p><strong>Timeline:</strong> Q1-Q2 2026 (Pending Phase 1 Success)</p>
+                <div class="roadmap-timeline">
+                    <div class="timeline-item">
+                        <strong>Market Validation</strong>
+                        <p>Demonstrate strong community interest and engagement metrics</p>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Sponsorship Outreach</strong>
+                        <p>Seek partnerships with gaming companies, crypto projects, and investors</p>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Legal Framework</strong>
+                        <p>Consult with gaming regulatory experts and lawyers</p>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Licensing Research</strong>
+                        <p>Identify appropriate jurisdictions and licensing requirements</p>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Compliance Planning</strong>
+                        <p>Develop KYC/AML procedures and responsible gaming measures</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="phase-box">
+                <h3><span class="phase-number">3</span>Licensed Real-World Launch</h3>
+                <p><strong>Timeline:</strong> Q2- Q3 2026 (Subject to Regulatory Approval)</p>
+                <div class="roadmap-timeline">
+                    <div class="timeline-item">
+                        <strong>Gaming License Acquisition</strong>
+                        <p>Obtain necessary permits and licenses for legal operation</p>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Platform Enhancement</strong>
+                        <p>Upgrade infrastructure for larger-scale operations</p>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Paid Model Introduction</strong>
+                        <p>Transition from free beta to paid entry with real prizes</p>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Public Launch</strong>
+                        <p>Open platform to general public with full marketing campaign</p>
+                    </div>
+                    <div class="timeline-item">
+                        <strong>Community Growth</strong>
+                        <p>Build engaged player base through tournaments and events</p>
+                    </div>
+                </div>
+            </div>
+
+            <h2>5. WHY SPONSORSHIP & ASSISTANCE ARE CRITICAL</h2>
+
+            <h3>5.1 Regulatory Complexity</h3>
+            <p>Blockchain-based gaming with financial elements requires:</p>
+            <ul>
+                <li>Gaming licenses from recognized regulatory bodies</li>
+                <li>Legal expertise in cryptocurrency and gambling law</li>
+                <li>Compliance with anti-money laundering (AML) regulations</li>
+                <li>Implementation of responsible gaming measures</li>
+                <li>Age verification and player protection systems</li>
+            </ul>
+
+            <h3>5.2 Financial Requirements</h3>
+            <p>Moving to a licensed platform requires significant investment in:</p>
+            <ul>
+                <li>Legal fees for licensing and compliance consultation</li>
+                <li>Infrastructure upgrades for enterprise-scale operations</li>
+                <li>Security audits and smart contract verification</li>
+                <li>Marketing and community building</li>
+                <li>Customer support and responsible gaming resources</li>
+            </ul>
+
+            <h3>5.3 Partnership Opportunities</h3>
+            <p>We are seeking partners who can provide:</p>
+            <ul>
+                <li><strong>Financial Sponsorship:</strong> Funding for licensing and development</li>
+                <li><strong>Legal Guidance:</strong> Expertise in gaming regulations and blockchain law</li>
+                <li><strong>Technical Support:</strong> Infrastructure and security consulting</li>
+                <li><strong>Marketing Support:</strong> Community building and promotional resources</li>
+                <li><strong>Strategic Advice:</strong> Industry connections and business development</li>
+            </ul>
+
+            <h2>6. MARKET OPPORTUNITY</h2>
+
+            <h3>6.1 Target Audience</h3>
+            <ul>
+                <li><strong>Crypto-native gamers:</strong> Comfortable with Web3 and blockchain technology</li>
+                <li><strong>Streamers & content creators:</strong> Looking for interactive community events</li>
+                <li><strong>Casual bettors:</strong> Interested in low-stakes social gaming</li>
+                <li><strong>pump.fun community:</strong> Existing audience familiar with token trading</li>
+            </ul>
+
+            <h3>6.2 Competitive Advantages</h3>
+            <ul>
+                <li><strong>Novel Mechanics:</strong> Unique blend of boss battles and community betting</li>
+                <li><strong>Transparency:</strong> All game logic and transactions on-chain</li>
+                <li><strong>Low Barrier to Entry:</strong> Free during beta, low-cost when paid</li>
+                <li><strong>Social Experience:</strong> Community-driven outcomes create shared excitement</li>
+                <li><strong>Streaming Integration:</strong> Natural fit for live entertainment</li>
+            </ul>
+
+            <h2>7. TOKENOMICS (Future Paid Model)</h2>
+
+            <div class="info-box">
+                <strong>⚡ FUTURE IMPLEMENTATION</strong>
+                <p>The following tokenomics apply only if/when the platform transitions to a licensed, paid model. Current beta remains free to play.</p>
+            </div>
+
+            <h3>7.1 Potential Fee Structure</h3>
+            <ul>
+                <li><strong>Entry Fee:</strong> Small SOL amount (e.g., 0.05-0.1 SOL per bet)</li>
+                <li><strong>Platform Fee:</strong> 5-10% of total pool for operations</li>
+                <li><strong>Prize Pool:</strong> 90-95% distributed to winners</li>
+            </ul>
+
+            <h3>7.2 Revenue Model</h3>
+            <ul>
+                <li>Platform fees from entry bets</li>
+                <li>Sponsored rounds with branded bosses</li>
+                <li>Premium features and cosmetics</li>
+                <li>Partnership revenue from token projects</li>
+            </ul>
+
+            <h2>8. RISK FACTORS & MITIGATION</h2>
+
+            <h3>8.1 Regulatory Risks</h3>
+            <p><strong>Challenge:</strong> Blockchain gaming regulations are evolving and vary by jurisdiction.</p>
+            <p><strong>Mitigation:</strong> Maintaining beta status until proper licensing is secured, working with legal experts, choosing regulated-friendly jurisdictions.</p>
+
+            <h3>8.2 Technical Risks</h3>
+            <p><strong>Challenge:</strong> Smart contract vulnerabilities could affect game integrity.</p>
+            <p><strong>Mitigation:</strong> Extensive testing during beta, professional security audits before paid launch, bug bounty programs.</p>
+
+            <h3>8.3 Market Risks</h3>
+            <p><strong>Challenge:</strong> User interest may not justify licensing costs.</p>
+            <p><strong>Mitigation:</strong> Beta testing phase assesses viability before significant investment, flexible business model can adapt to market feedback.</p>
+
+            <h2>9. CONTACT & PARTNERSHIP INQUIRIES</h2>
+
+            <p>We are actively seeking partners, sponsors, and advisors who share our vision for innovative blockchain gaming.</p>
+
+            <div class="highlight-box">
+                <strong>🤝 INTERESTED IN PARTNERING?</strong>
+                <p>If you're interested in sponsoring Raid It, providing regulatory guidance, or exploring partnership opportunities, we'd love to hear from you.</p>
+                <p>For beta access, technical details, or partnership discussions, please reach out through our official channels.</p>
+            </div>
+
+            <h2>10. CONCLUSION</h2>
+
+            <p>Raid It represents an exciting opportunity to create a new category of social blockchain gaming that combines entertainment, community engagement, and transparent gameplay mechanics.</p>
+
+            <p>Our two-phase approach—starting with beta testing to validate market interest, followed by pursuing proper licensing and sponsorship—ensures we build a sustainable, compliant platform that players can trust.</p>
+
+            <p>We invite players to join our beta testing phase, and we welcome partnerships from those who can help us realize the vision of bringing Raid It to the global gaming community.</p>
+
+            <div class="info-box">
+                <strong>🚀 JOIN THE RAID</strong>
+                <p>Ready to experience the future of community boss battles? Jump into the beta and help shape the future of Raid It!</p>
+                <p style="text-align: center; margin-top: 20px;">
+                    <a href="index.html" class="back-btn">PLAY NOW (BETA)</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
