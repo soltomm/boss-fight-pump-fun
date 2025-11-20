@@ -62,7 +62,7 @@ const INITIAL_HP = process.env.INITIAL_HP ? Number(process.env.INITIAL_HP) : 30;
 const EXPORT_DIR = process.env.EXPORT_DIR || path.join(__dirname, 'exports');
 const SOLANA_RPC_URL = process.env.SOLANA_RPC_URL || 'https://devnet.helius-rpc.com/?api-key=dc02dd0a-4e67-4759-8fa2-940cf9c75746';
 const TREASURY_WALLET = process.env.TREASURY_WALLET;
-const PROGRAM_ID_STR = process.env.PROGRAM_ID || 'FtQbMDA7w8a9icfbMkuTxxQ695Wp9e6RQFSGVjmYQgz3';
+const PROGRAM_ID_STR = process.env.PROGRAM_ID || 'EiWbPhCjpcf7w1ar5Ws2xxWFRrmS6M6gyNCwcPm8uNxz';
 const TOKEN_MINT_STR = COIN_ADDRESS
 const FEE_PERCENTAGE = process.env.FEE_PERCENTAGE ? Number(process.env.FEE_PERCENTAGE) : 0;
 const BETTING_DURATION = 60;
