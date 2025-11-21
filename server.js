@@ -69,6 +69,7 @@ const BETTING_DURATION = 60;
 const FIGHT_DURATION = 60;
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'aaa';
 const ADMIN_WALLET = process.env.ADMIN_WALLET || '5GrJ4aUiQRc1frnxyv89ws27wPu2fxsgJvxHgLmEjBBq';
+const BOT_API_KEY = process.env.BOT_API_KEY; // For authenticated bot endpoint access
 
 // Load whitelisted betting wallets (if specified)
 const WHITELISTED_BETTING_WALLETS = process.env.WHITELISTED_BETTING_WALLETS
@@ -146,24 +147,22 @@ try {
       tokenDecimals = mintInfo.decimals;
       console.log(`✅ Token decimals: ${tokenDecimals}`);
     })
-    .catch(err => {
-      console.error('Error fetching token mint info:', err.message);
+    .catch(() => {
+      console.error('Error fetching token mint info');
     });
   
   connection.getBalance(authorityKeypair.publicKey).then(balance => {
     console.log('💰 Authority SOL balance:', balance / LAMPORTS_PER_SOL, 'SOL');
-    
+
     if (balance < 0.01 * LAMPORTS_PER_SOL) {
       console.error('❌ INSUFFICIENT SOL BALANCE FOR FEES!');
-      console.log('💸 Airdrop command:');
-      console.log(`solana airdrop 5 ${authorityKeypair.publicKey.toString()} --url devnet`);
     }
-  }).catch(err => {
-    console.error('Error checking balance:', err.message);
+  }).catch(() => {
+    console.error('Error checking balance');
   });
   
 } catch (error) {
-  console.error('❌ Error loading authority keypair:', error.message);
+  console.error('❌ Error loading authority keypair');
   process.exit(1);
 }
 
@@ -174,7 +173,7 @@ const programId = new PublicKey(PROGRAM_ID_STR);
 const treasuryPubkey = treasuryKeypair.publicKey;
 
 // Load IDL
-const idl = JSON.parse(fs.readFileSync(path.join(__dirname, 'target', 'idl_new.json'), 'utf8'));
+const idl = JSON.parse(fs.readFileSync(path.join(__dirname, 'target', 'idl_prod.json'), 'utf8'));
 const program = new Program(idl, provider);
 
 // Game phases
@@ -233,7 +232,41 @@ function fromBaseUnits(amount) {
 
 // Serve static overlay page and assets
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' })); // Limit request body size
+
+// Middleware to validate Solana wallet address
+function validateWalletAddress(address) {
+  if (!address || typeof address !== 'string') return false;
+  try {
+    new PublicKey(address);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Middleware to sanitize username
+function sanitizeUsername(username) {
+  if (!username || typeof username !== 'string') return null;
+  // Remove HTML tags and limit length
+  const sanitized = username.replace(/<[^>]*>/g, '').trim();
+  return sanitized.length > 0 && sanitized.length <= 50 ? sanitized : null;
+}
+
+// Middleware to authenticate bot API requests
+function authenticateBotAPI(req, res, next) {
+  const apiKey = req.headers['x-api-key'] || req.query.apiKey;
+
+  if (!BOT_API_KEY) {
+    return res.status(500).json({ error: 'Bot API not configured' });
+  }
+
+  if (apiKey !== BOT_API_KEY) {
+    return res.status(401).json({ error: 'Unauthorized - Invalid API key' });
+  }
+
+  next();
+}
 
 // API endpoints
 app.get('/api/game-status', (req, res) => {
@@ -258,10 +291,16 @@ app.get('/api/game-status', (req, res) => {
 app.get('/api/betting-round/:roundId', async (req, res) => {
   try {
     const roundId = parseInt(req.params.roundId);
+
+    // Validate round ID
+    if (isNaN(roundId) || roundId < 0) {
+      return res.status(400).json({ error: 'Invalid round ID' });
+    }
+
     const [bettingRoundPDA] = getBettingRoundPDA(roundId);
-    
+
     const bettingRoundAccount = await program.account.bettingRound.fetch(bettingRoundPDA);
-    
+
     res.json({
       roundId,
       phase: Object.keys(bettingRoundAccount.phase)[0],
@@ -273,10 +312,10 @@ app.get('/api/betting-round/:roundId', async (req, res) => {
       bossDefeated: bettingRoundAccount.bossDefeated,
       bettingEndTime: bettingRoundAccount.bettingEndTime.toNumber() * 1000,
       fightEndTime: bettingRoundAccount.fightEndTime.toNumber() * 1000,
-      tokenMint: bettingRoundAccount.tokenMint.toString() // NEW
+      tokenMint: bettingRoundAccount.tokenMint.toString()
     });
   } catch (error) {
-    console.error('Error fetching betting round:', error);
+    console.error('Error fetching betting round');
     res.status(404).json({ error: 'Betting round not found' });
   }
 });
@@ -285,16 +324,32 @@ app.post('/api/bet-notification', (req, res) => {
   try {
     const { walletAddress, username, prediction } = req.body;
 
+    // Validate wallet address
+    if (!validateWalletAddress(walletAddress)) {
+      return res.status(400).json({ error: 'Invalid wallet address' });
+    }
+
+    // Sanitize and validate username
+    const sanitizedUsername = sanitizeUsername(username);
+    if (!sanitizedUsername) {
+      return res.status(400).json({ error: 'Invalid username' });
+    }
+
+    // Validate prediction
+    if (prediction !== 'death' && prediction !== 'survival') {
+      return res.status(400).json({ error: 'Invalid prediction - must be "death" or "survival"' });
+    }
+
     // Check if wallet is authorized to place bets
     if (!isWalletAuthorizedToBet(walletAddress)) {
       console.log(`Unauthorized bet notification from wallet: ${walletAddress}`);
       return res.status(403).json({ error: 'Wallet not authorized to place bets' });
     }
 
-    console.log(`Bet notification received: ${username} (${walletAddress}) bet on ${prediction}`);
+    console.log(`Bet notification received: ${sanitizedUsername} (${walletAddress}) bet on ${prediction}`);
 
     onChainBets.set(walletAddress, {
-      username,
+      username: sanitizedUsername,
       prediction,
       timestamp: Date.now()
     });
@@ -313,7 +368,7 @@ app.post('/api/bet-notification', (req, res) => {
 
     res.json({ success: true, message: 'Bet notification received' });
   } catch (error) {
-    console.error('Error processing bet notification:', error);
+    console.error('Error processing bet notification');
     res.status(500).json({ error: 'Error processing bet notification' });
   }
 });
@@ -340,14 +395,14 @@ async function getRobustBlockhash(connection, commitment) {
     while (attempts < 3) {
         try {
             const blockhashData = await connection.getLatestBlockhash(commitment);
-            
+
             if (blockhashData && blockhashData.blockhash) {
                 return blockhashData;
             }
         } catch (error) {
-            console.warn(`Attempt ${attempts + 1} failed to fetch blockhash. Retrying...`, error.message);
+            console.warn(`Attempt ${attempts + 1} failed to fetch blockhash. Retrying...`);
             attempts++;
-            await new Promise(resolve => setTimeout(resolve, 500)); 
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
     }
     throw new Error('Failed to fetch a recent blockhash after multiple attempts.');
@@ -381,6 +436,22 @@ app.post('/api/place-bet', async (req, res) => {
   try {
     const { walletAddress, username, prediction } = req.body;
 
+    // Validate wallet address
+    if (!validateWalletAddress(walletAddress)) {
+      return res.status(400).json({ error: 'Invalid wallet address' });
+    }
+
+    // Sanitize and validate username
+    const sanitizedUsername = sanitizeUsername(username);
+    if (!sanitizedUsername) {
+      return res.status(400).json({ error: 'Invalid username' });
+    }
+
+    // Validate prediction
+    if (prediction !== 'death' && prediction !== 'survival') {
+      return res.status(400).json({ error: 'Invalid prediction - must be "death" or "survival"' });
+    }
+
     if (gamePhase !== GAME_PHASES.BETTING || !currentRoundId) {
       return res.status(400).json({ error: 'Betting is closed or no round is active' });
     }
@@ -396,7 +467,7 @@ app.post('/api/place-bet', async (req, res) => {
       return res.status(400).json({ error: 'Bet already placed for this round' });
     }
 
-    console.log(`Free bet accepted from ${username} (${walletAddress}) on ${prediction}`);
+    console.log(`Free bet accepted from ${sanitizedUsername} (${walletAddress}) on ${prediction}`);
 
     // Simply acknowledge the bet - no blockchain transaction needed
     res.json({
@@ -405,7 +476,7 @@ app.post('/api/place-bet', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error placing bet:', error);
+    console.error('Error placing bet');
     res.status(500).json({ error: 'Error placing bet' });
   }
 });
@@ -414,8 +485,19 @@ app.get('/api/bet-status/:walletAddress/:roundId', async (req, res) => {
   try {
     const { walletAddress, roundId } = req.params;
 
+    // Validate wallet address
+    if (!validateWalletAddress(walletAddress)) {
+      return res.status(400).json({ error: 'Invalid wallet address' });
+    }
+
+    // Validate round ID
+    const parsedRoundId = parseInt(roundId);
+    if (isNaN(parsedRoundId) || parsedRoundId < 0) {
+      return res.status(400).json({ error: 'Invalid round ID' });
+    }
+
     // Check in-memory bet storage
-    if (onChainBets.has(walletAddress) && parseInt(roundId) === currentRoundId) {
+    if (onChainBets.has(walletAddress) && parsedRoundId === currentRoundId) {
       const bet = onChainBets.get(walletAddress);
       res.json({
         exists: true,
@@ -427,18 +509,33 @@ app.get('/api/bet-status/:walletAddress/:roundId', async (req, res) => {
       res.json({ exists: false });
     }
   } catch (error) {
-    console.error('Error checking bet status:', error);
+    console.error('Error checking bet status');
     res.status(500).json({ error: 'Error checking bet status' });
   }
 });
 
-app.get('/test', (req, res) => {
+// Bot API endpoint - protected with authentication
+app.get('/api/bot/simulate-hit', authenticateBotAPI, (req, res) => {
   const user = req.query.user || 'tester';
   const msg = req.query.msg || 'HIT';
-  if (gamePhase === GAME_PHASES.FIGHTING) {
-    handleChatMessage(user, msg, Date.now());
+
+  // Sanitize username
+  const sanitizedUser = sanitizeUsername(user);
+  if (!sanitizedUser) {
+    return res.status(400).json({ error: 'Invalid username' });
   }
-  res.json({ ok: true, user, msg, gamePhase });
+
+  // Validate message
+  if (!msg || typeof msg !== 'string' || msg.length > 100) {
+    return res.status(400).json({ error: 'Invalid message' });
+  }
+
+  if (gamePhase === GAME_PHASES.FIGHTING) {
+    handleChatMessage(sanitizedUser, msg, Date.now());
+    res.json({ ok: true, user: sanitizedUser, msg, gamePhase, message: 'Message processed' });
+  } else {
+    res.json({ ok: false, gamePhase, message: 'Not in fighting phase' });
+  }
 });
 
 // Handle overlay client connections
