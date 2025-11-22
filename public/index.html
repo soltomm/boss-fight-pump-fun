@@ -7,6 +7,10 @@
     <link rel="icon" type="image/png" href="raid_logo_no_back.png">
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <script>
+        // Configuration from environment
+        window.BOSS_IMAGE_TEXT = '${BOSS_IMAGE_TEXT}';
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
 
@@ -938,11 +942,18 @@
                     <span class="status-indicator status-disconnected" id="connectionStatus"></span>
                     Waiting for game to start...
                 </div>
-                
-                <div class="boss-image-container">
-                    <img id="bossImage" class="boss-image" src="the_rock.png" alt="Boss">
+
+                <div id="bossImageText" style="text-align: center; font-family: 'Orbitron', sans-serif; font-size: 2rem; font-weight: 900; color: #ffd700; text-shadow: 0 0 30px #ffd700; margin-bottom: 20px; letter-spacing: 3px;">
                 </div>
-                
+
+                <div class="boss-image-container">
+                    <img id="bossImage" class="boss-image" src="boss_1.png" alt="Boss">
+                </div>
+
+                <div id="fightInstructions" style="text-align: center; font-family: 'Orbitron', sans-serif; font-size: 1.2rem; font-weight: 700; color: #00f0ff; text-shadow: 0 0 20px #00f0ff; margin-top: 15px; margin-bottom: 15px; display: none;">
+                    💬 Text <span style="color: #ff0080;">HIT</span> or <span style="color: #00f0ff;">HEAL</span> in the chat!
+                </div>
+
                 <div class="boss-hp">
                     <div class="hp-bar">
                         <div class="hp-fill" id="hpFill" style="width: 100%"></div>
@@ -984,9 +995,6 @@
             <div class="wallet-address" id="walletAddress" style="display: none;"></div>
             <a href="terms.html" class="tos-button">
                 📜 TERMS OF SERVICE
-            </a>
-            <a href="litepaper.html" class="tos-button" style="margin-top: 10px;">
-                📄 LITEPAPER
             </a>
             <div class="card leaderboard">
                 <h3>🏆 TOP DAMAGE DEALERS</h3>
@@ -1470,14 +1478,32 @@
             } else {
                 el.bettingSection.style.display = 'none';
             }
-            
+
+            // Show/hide fight instructions
+            const fightInstructions = document.getElementById('fightInstructions');
+            if (gameState.gamePhase === 'fighting') {
+                fightInstructions.style.display = 'block';
+            } else {
+                fightInstructions.style.display = 'none';
+            }
+
             el.deathPool.textContent = `${gameState.totalDeathBets || 0} BETS`;
             el.survivalPool.textContent = `${gameState.totalSurvivalBets || 0} BETS`;
-            
-            el.lastHitter.textContent = gameState.lastHitter || 'None';
+
+            el.lastHitter.textContent = gameState.lastHitter ? shortenAddress(gameState.lastHitter) : 'None';
             el.totalHits.textContent = gameState.totalHits || '0';
         }
         
+        // Helper function to shorten wallet addresses
+        function shortenAddress(address) {
+            if (!address || address.length < 12) return address;
+            // Check if it looks like a Solana address (long alphanumeric string)
+            if (address.length > 20) {
+                return `${address.substring(0, 4)}...${address.substring(address.length - 4)}`;
+            }
+            return address;
+        }
+
         function updateLeaderboard(topPlayers) {
             if (!topPlayers) return;
             el.topPlayers.innerHTML = '';
@@ -1485,21 +1511,23 @@
                 const div = document.createElement('div');
                 div.className = 'top-player';
                 const medals = ['🥇', '🥈', '🥉'];
+                const displayName = shortenAddress(player.username);
                 div.innerHTML = `
-                    <span class="player-name">${medals[index] || `#${index + 1}`} ${player.username}</span>
+                    <span class="player-name">${medals[index] || `#${index + 1}`} ${displayName}</span>
                     <span class="player-hits">${player.hits} 💥</span>
                 `;
                 el.topPlayers.appendChild(div);
             });
         }
-        
+
         function addActivityItem(activity) {
             const item = document.createElement('div');
             item.className = `activity-item ${activity.delta < 0 ? 'damage' : 'heal'}`;
             const icon = activity.delta < 0 ? '⚔️' : '💚';
             const action = activity.delta < 0 ? 'dealt' : 'healed';
-            item.textContent = `${icon} ${activity.username} ${action} ${Math.abs(activity.delta)} damage`;
-            
+            const displayName = shortenAddress(activity.username);
+            item.textContent = `${icon} ${displayName} ${action} ${Math.abs(activity.delta)} damage`;
+
             el.activityList.insertBefore(item, el.activityList.firstChild);
             while (el.activityList.children.length > 25) {
                 el.activityList.removeChild(el.activityList.lastChild);
@@ -1965,6 +1993,13 @@ console.log('Phantom provider:', getPhantomProvider());
             });
         });
         
+        // Set boss image text from environment variable
+        if (window.BOSS_IMAGE_TEXT && window.BOSS_IMAGE_TEXT !== '${BOSS_IMAGE_TEXT}') {
+            document.getElementById('bossImageText').textContent = window.BOSS_IMAGE_TEXT;
+        } else {
+            document.getElementById('bossImageText').textContent = 'RAID THE BOSS';
+        }
+
         // Initialize
         updateDisplay();
         setTimeout(() => {
@@ -2390,11 +2425,6 @@ socket.on('phase_change', (data) => {
         });
     </script>
     <div style="position: fixed; bottom: 10px; right: 10px; z-index: 1000; display: flex; gap: 15px;">
-    <a href="litepaper.html" style="color: #ffd700; text-decoration: none; font-size: 0.9rem; opacity: 0.7; transition: opacity 0.3s;"
-       onmouseover="this.style.opacity='1'"
-       onmouseout="this.style.opacity='0.7'">
-        Litepaper
-    </a>
     <a href="terms.html" style="color: #00f0ff; text-decoration: none; font-size: 0.9rem; opacity: 0.7; transition: opacity 0.3s;"
        onmouseover="this.style.opacity='1'"
        onmouseout="this.style.opacity='0.7'">

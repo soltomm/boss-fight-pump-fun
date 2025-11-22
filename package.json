@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.31.1",
+    "@solana/spl-token": "^0.3.8",
     "@solana/web3.js": "^1.98.4",
     "axios": "^1.12.2",
     "bn.js": "^5.2.1",
@@ -17,10 +18,10 @@
     "date-fns": "*",
     "dotenv": "^17.2.3",
     "express": "*",
+    "express-rate-limit": "^8.2.1",
     "pump-chat-client": "*",
     "socket.io": "*",
     "socket.io-client": "^4.8.1",
-    "ws": "^8.18.3",
-    "@solana/spl-token": "^0.3.8"
+    "ws": "^8.18.3"
   }
 }

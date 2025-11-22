@@ -230,6 +230,18 @@ function fromBaseUnits(amount) {
   return amount / Math.pow(10, tokenDecimals);
 }
 
+// Serve index.html with environment variable injection
+app.get('/', (req, res) => {
+  const indexPath = path.join(__dirname, 'public', 'index.html');
+  let html = fs.readFileSync(indexPath, 'utf8');
+
+  // Replace the placeholder with actual environment variable
+  const bossImageText = process.env.BOSS_IMAGE_TEXT || 'RAID THE BOSS';
+  html = html.replace('${BOSS_IMAGE_TEXT}', bossImageText);
+
+  res.send(html);
+});
+
 // Serve static overlay page and assets
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json({ limit: '1mb' })); // Limit request body size
