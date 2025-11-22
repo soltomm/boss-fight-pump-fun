@@ -8,8 +8,8 @@
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
     <script>
-        // Configuration from environment
-        window.BOSS_IMAGE_TEXT = '${BOSS_IMAGE_TEXT}';
+        // Configuration
+        window.BOSS_IMAGE_TEXT = 'The Serial Launcher';
     </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@500;700&display=swap');
@@ -1993,12 +1993,8 @@ console.log('Phantom provider:', getPhantomProvider());
             });
         });
         
-        // Set boss image text from environment variable
-        if (window.BOSS_IMAGE_TEXT && window.BOSS_IMAGE_TEXT !== '${BOSS_IMAGE_TEXT}') {
-            document.getElementById('bossImageText').textContent = window.BOSS_IMAGE_TEXT;
-        } else {
-            document.getElementById('bossImageText').textContent = 'RAID THE BOSS';
-        }
+        // Set boss image text
+        document.getElementById('bossImageText').textContent = window.BOSS_IMAGE_TEXT;
 
         // Initialize
         updateDisplay();
