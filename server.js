@@ -19,6 +19,7 @@ const {
 // NEW: Import SPL Token functions
 const {
   TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
   getAssociatedTokenAddress,
   createAssociatedTokenAccountInstruction,
   getAccount,
@@ -90,6 +91,7 @@ function isWalletAuthorizedToBet(walletAddress) {
 let fightEndingInProgress = false;
 let fightEndCalled = false;
 let tokenDecimals = 6; // Will be fetched from mint
+let tokenProgramId = TOKEN_PROGRAM_ID; // Will be detected from mint
 
 const { PumpChatClient } = require('pump-chat-client');
 
@@ -141,14 +143,33 @@ try {
   console.log('🏦 Treasury address:', treasuryKeypair.publicKey.toString());
   console.log('🪙 Token mint:', TOKEN_MINT_STR);
   
-  // Fetch token decimals
-  getMint(connection, tokenMint, 'confirmed', TOKEN_PROGRAM_ID)
-    .then(mintInfo => {
+  // Detect token program and fetch token decimals
+  connection.getAccountInfo(tokenMint)
+    .then(async (accountInfo) => {
+      if (!accountInfo) {
+        console.error('❌ Token mint not found');
+        return;
+      }
+
+      // Detect which token program owns this mint
+      if (accountInfo.owner.equals(TOKEN_2022_PROGRAM_ID)) {
+        tokenProgramId = TOKEN_2022_PROGRAM_ID;
+        console.log('✅ Detected Token-2022 (Token Extensions Program)');
+      } else if (accountInfo.owner.equals(TOKEN_PROGRAM_ID)) {
+        tokenProgramId = TOKEN_PROGRAM_ID;
+        console.log('✅ Detected standard SPL Token Program');
+      } else {
+        console.error('❌ Unknown token program:', accountInfo.owner.toString());
+        return;
+      }
+
+      // Fetch mint info with correct program
+      const mintInfo = await getMint(connection, tokenMint, 'confirmed', tokenProgramId);
       tokenDecimals = mintInfo.decimals;
       console.log(`✅ Token decimals: ${tokenDecimals}`);
     })
-    .catch(() => {
-      console.error('Error fetching token mint info');
+    .catch((err) => {
+      console.error('❌ Error fetching token mint info:', err.message);
     });
   
   connection.getBalance(authorityKeypair.publicKey).then(balance => {
@@ -426,11 +447,11 @@ async function ensureTokenAccount(connection, mint, owner, payer) {
     mint,
     owner,
     false,
-    TOKEN_PROGRAM_ID
+    tokenProgramId // Use detected token program
   );
 
   try {
-    await getAccount(connection, tokenAccountAddress, 'confirmed', TOKEN_PROGRAM_ID);
+    await getAccount(connection, tokenAccountAddress, 'confirmed', tokenProgramId);
     return { address: tokenAccountAddress, instruction: null };
   } catch (error) {
     const instruction = createAssociatedTokenAccountInstruction(
@@ -438,7 +459,7 @@ async function ensureTokenAccount(connection, mint, owner, payer) {
       tokenAccountAddress,
       owner,
       mint,
-      TOKEN_PROGRAM_ID
+      tokenProgramId // Use detected token program
     );
     return { address: tokenAccountAddress, instruction };
   }
@@ -807,7 +828,7 @@ async function startBettingPhase() {
               authority: authorityKeypair.publicKey,
               treasury: treasuryPubkey,
               systemProgram: SystemProgram.programId,
-              tokenProgram: TOKEN_PROGRAM_ID,
+              tokenProgram: tokenProgramId,
               rent: web3.SYSVAR_RENT_PUBKEY,
             })
             .preInstructions(createTreasuryTokenAccountIx ? [createTreasuryTokenAccountIx] : [])
@@ -983,7 +1004,7 @@ async function claimFees() {
         treasury: treasuryPubkey,
         authority: authorityKeypair.publicKey,
         systemProgram: SystemProgram.programId,
-        tokenProgram: TOKEN_PROGRAM_ID, // NEW
+        tokenProgram: tokenProgramId, // Use detected token program
       })
       .preInstructions(createTreasuryTokenAccountIx ? [createTreasuryTokenAccountIx] : [])
       .rpc();
@@ -1065,7 +1086,7 @@ async function processPayouts() {
           treasuryKeypair.publicKey, // Treasury signs, not authority
           payoutPerWinnerInBaseUnits,
           [],
-          TOKEN_PROGRAM_ID
+          tokenProgramId // Use detected token program
         );
 
         const transaction = new web3.Transaction();
