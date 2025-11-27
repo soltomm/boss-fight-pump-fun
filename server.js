@@ -809,7 +809,7 @@ async function startBettingPhase() {
             await ensureTokenAccount(connection, tokenMint, treasuryPubkey, authorityKeypair.publicKey);
 
           // Prize pool is 30k tokens in base units
-          const PRIZE_POOL = 500000;
+          const PRIZE_POOL = 1000;
           const prizePoolBaseUnits = toBaseUnits(PRIZE_POOL);
 
           const tx = await program.methods
@@ -1053,7 +1053,7 @@ async function processPayouts() {
     }
 
     // Prize pool is 300k tokens, split equally among winners
-    const PRIZE_POOL = 500000;
+    const PRIZE_POOL = 1000;
     const payoutPerWinner = Math.floor(PRIZE_POOL / winnerCount);
     const payoutPerWinnerInBaseUnits = toBaseUnits(payoutPerWinner);
 
