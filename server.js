@@ -1137,23 +1137,40 @@ async function endFight() {
     return;
   }
   if (gamePhase !== GAME_PHASES.FIGHTING) return;
-  
+
   try {
     fightEndingInProgress = true;
     fightEndCalled = true;
     clearTimeout(gameTimer);
-    
+
     const bossDefeated = bossHP === 0;
-    
+
     console.log(`Ending fight. Boss ${bossDefeated ? 'defeated' : 'survived'}`);
     console.log(`Final HP: ${bossHP}/${INITIAL_HP}`);
-    
+
+    // Change phase and notify users immediately
+    gamePhase = GAME_PHASES.ENDED;
+
+    const results = buildResults(bossDefeated);
+
+    io.emit('fight_ended', {
+      gamePhase,
+      bossDefeated,
+      results,
+      message: `Boss ${bossDefeated ? 'defeated' : 'survived'}! Processing payouts...`
+    });
+
+    exportResults(results).then(() => {
+      console.log('Results exported.');
+    }).catch(err => console.error('Error exporting results:', err));
+
+    // Process blockchain end fight and payouts after notifying users
     if (program) {
       console.log('Ending fight on blockchain');
-      const finalHP_BN = new BN(bossHP); 
-      
+      const finalHP_BN = new BN(bossHP);
+
       console.log(`[RPC PAYLOAD CHECK] Sending final_hp: ${bossHP} (BN value: ${finalHP_BN.toString()})`);
-      
+
       const tx = await program.methods
         .endFight(finalHP_BN)
         .accounts({
@@ -1161,26 +1178,15 @@ async function endFight() {
           authority: authorityKeypair.publicKey,
         })
         .rpc();
-      
+
       console.log('Fight ended on blockchain:', tx);
-      await processPayouts();
+
+      // Process payouts in background (after fight_ended event sent)
+      processPayouts().catch(err => {
+        console.error('Error processing payouts:', err);
+      });
     }
-    
-    gamePhase = GAME_PHASES.ENDED;
-    //autoStartGameLoop();
-    
-    const results = buildResults(bossDefeated);
-    
-    io.emit('fight_ended', {
-      gamePhase,
-      bossDefeated,
-      results,
-      message: `Boss ${bossDefeated ? 'defeated' : 'survived'}! Processing payouts...`
-    });
-    
-    exportResults(results).then(() => {
-      console.log('Results exported.');
-    }).catch(err => console.error('Error exporting results:', err));
+
   } catch (error) {
     console.error('Error ending fight:', error);
   } finally {
