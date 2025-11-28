@@ -1045,7 +1045,7 @@ async function processPayouts() {
       io.emit('payouts_processed', {
         bossDefeated,
         winningPrediction,
-        totalPrizePool: 300000,
+        totalPrizePool: PRIZE_POOL,
         winningBets: 0,
         payouts: []
       });
